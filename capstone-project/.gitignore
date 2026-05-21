@@ -34,3 +34,6 @@ results/
 tmp/
 temp/
 cache/
+
+# uv files
+.lock
