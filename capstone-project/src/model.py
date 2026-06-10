@@ -430,6 +430,10 @@ def run_training(config: dict[str, Any]) -> dict[str, Any]:
         if mlflow is not None:
             _log_history(mlflow, history)
 
+        history = train_model(model, base_model, dataset, config, checkpoint_path)
+        if checkpoint_path.exists():
+            model = keras.models.load_model(checkpoint_path)
+
         # 5. Evaluate -------------------------------------------------------
         report = evaluate_on_test(model, dataset, num_classes, batch_size=batch_size)
         print("\n" + format_report(report))
