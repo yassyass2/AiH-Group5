@@ -17,10 +17,10 @@ CSV and image folder:
         test.csv      ->  test_images/test_images/<id_code>.png
 
 Because the split already exists, we do NOT re-split here. Instead each split
-gets the per-image pipeline (cut-off filtering -> crop -> resize 224x224 ->
-noise reduction -> green channel + CLAHE -> normalise to [0, 1]), and SMOTE
-class balancing is applied to the TRAINING split only. Validation and test keep
-their natural class distribution for an honest evaluation.
+gets the paper's per-image pipeline (resize 224x224 -> CLAHE -> median blur
+(kernel 3) -> normalise to [0, 1]), and SMOTE class balancing is applied to the
+TRAINING split only. Validation and test keep their natural class distribution
+for an honest evaluation.
 
 Outputs (float32 arrays in [0, 1] of shape (N, 224, 224, 3) and integer label
 arrays):
@@ -77,17 +77,16 @@ def main() -> None:
 
         df = load_split_df(csv_name, images_dir)
 
-        # Per-image pipeline: cut-off filter -> crop -> resize -> noise
-        # reduction -> green + CLAHE -> normalise to [0, 1].
-        # skip_cut_off=False -> cut-off filtering IS applied (see
-        # pre_proc_pipeline.preprocess_image_path for the flag semantics).
+        # Per-image pipeline (paper procedure): resize -> CLAHE -> median blur
+        # (kernel 3) -> normalise to [0, 1]. skip_cut_off=True -> no cut-off
+        # filtering, matching the paper (which crops/filters nothing).
         X, y = build_dataset(
             df,
             images_dir,
             id_column=ID_COLUMN,
             label_column=LABEL_COLUMN,
             image_extension=IMAGE_EXTENSION,
-            skip_cut_off=False,
+            skip_cut_off=True,
         )
 
         # SMOTE balancing on the training split only.
