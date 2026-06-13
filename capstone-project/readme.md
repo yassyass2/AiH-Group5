@@ -125,8 +125,11 @@ The weakest recalls are grade 1 mild (`0.5333`) and grade 4 proliferative
 macro sensitivity (`0.5997`) because grade 1 recall dropped to `0.2667`.
 An ordinal-regression ablation with validation-tuned thresholds reached lower
 test QWK (`0.8037`) and lower macro sensitivity (`0.4520`), with particularly
-weak grade 4 recall (`0.0909`). Therefore the class-weighted baseline remains
-the selected result.
+weak grade 4 recall (`0.0909`). An EfficientNetB1 backbone ablation reached
+test QWK `0.8595`, macro sensitivity `0.6154`, and macro ROC-AUC `0.9265`;
+it improves grade 4 recall slightly but does not beat the B0 test QWK.
+Therefore the class-weighted EfficientNetB0 baseline remains the selected
+result.
 
 ## Evaluation and Grad-CAM artifacts
 

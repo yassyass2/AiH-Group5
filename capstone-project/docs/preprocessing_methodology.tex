@@ -162,8 +162,16 @@ the softmax baseline. Its validation-tuned thresholds were approximately
 \([0.92, 1.84, 3.13, 4.24]\), with validation threshold QWK \(0.8359\), but the
 held-out test QWK was \(0.8037\), accuracy was \(0.6612\), and macro
 sensitivity was \(0.4520\). The most important failure was the proliferative
-DR class, whose sensitivity dropped to \(0.0909\). The class-weighted softmax
-baseline therefore remains the selected result.
+DR class, whose sensitivity dropped to \(0.0909\).
+
+An EfficientNetB1 backbone ablation reached a higher best validation QWK than
+the B0 run, but this did not translate into a better held-out test QWK. On the
+test split, EfficientNetB1 reached QWK \(0.8595\), accuracy \(0.7678\), macro
+sensitivity \(0.6154\), macro specificity \(0.9449\), and macro ROC-AUC
+\(0.9265\). It slightly improved proliferative DR sensitivity
+(\(0.4848\) versus \(0.4545\)), but reduced grade 2 and grade 3 sensitivity.
+The class-weighted EfficientNetB0 softmax baseline therefore remains the
+selected result.
 
 \section{Explainability}
 \label{sec:explainability}

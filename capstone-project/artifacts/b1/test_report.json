@@ -1,0 +1,89 @@
+{
+  "qwk": 0.8594988738022218,
+  "accuracy": 0.76775956284153,
+  "macro_sensitivity": 0.6154160191825191,
+  "macro_specificity": 0.944914676748013,
+  "macro_auc": 0.9265451949666094,
+  "per_class": {
+    "0": {
+      "name": "No DR",
+      "sensitivity": 0.9547738693467337,
+      "specificity": 0.9760479041916168,
+      "auc": 0.9952757800980954,
+      "support": 199
+    },
+    "1": {
+      "name": "Mild",
+      "sensitivity": 0.5333333333333333,
+      "specificity": 0.9255952380952381,
+      "auc": 0.866765873015873,
+      "support": 30
+    },
+    "2": {
+      "name": "Moderate",
+      "sensitivity": 0.5747126436781609,
+      "specificity": 0.9247311827956989,
+      "auc": 0.9263997033741194,
+      "support": 87
+    },
+    "3": {
+      "name": "Severe",
+      "sensitivity": 0.5294117647058824,
+      "specificity": 0.9312320916905444,
+      "auc": 0.9203606944210349,
+      "support": 17
+    },
+    "4": {
+      "name": "Proliferative",
+      "sensitivity": 0.48484848484848486,
+      "specificity": 0.9669669669669669,
+      "auc": 0.923923923923924,
+      "support": 33
+    }
+  },
+  "confusion_matrix": [
+    [
+      190,
+      7,
+      2,
+      0,
+      0
+    ],
+    [
+      3,
+      16,
+      8,
+      1,
+      2
+    ],
+    [
+      1,
+      14,
+      50,
+      17,
+      5
+    ],
+    [
+      0,
+      0,
+      4,
+      9,
+      4
+    ],
+    [
+      0,
+      4,
+      7,
+      6,
+      16
+    ]
+  ],
+  "class_names": [
+    "No DR",
+    "Mild",
+    "Moderate",
+    "Severe",
+    "Proliferative"
+  ],
+  "num_samples": 366
+}
