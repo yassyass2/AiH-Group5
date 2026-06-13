@@ -1,81 +1,81 @@
 {
-  "qwk": 0.8669234883960998,
-  "accuracy": 0.8050139275766016,
-  "macro_sensitivity": 0.5788364248520725,
-  "macro_specificity": 0.947591863093316,
-  "macro_auc": 0.9298109152254144,
+  "qwk": 0.8654760538962611,
+  "accuracy": 0.7841530054644809,
+  "macro_sensitivity": 0.6430852523110976,
+  "macro_specificity": 0.9491879076048614,
+  "macro_auc": 0.9204423799666668,
   "per_class": {
     "0": {
       "name": "No DR",
-      "sensitivity": 0.9846938775510204,
-      "specificity": 0.9386503067484663,
-      "auc": 0.9945223488168273,
-      "support": 196
+      "sensitivity": 0.9597989949748744,
+      "specificity": 0.9820359281437125,
+      "auc": 0.9941323383383985,
+      "support": 199
     },
     "1": {
       "name": "Mild",
-      "sensitivity": 0.27586206896551724,
-      "specificity": 0.9666666666666667,
-      "auc": 0.8831765935214211,
-      "support": 29
+      "sensitivity": 0.5333333333333333,
+      "specificity": 0.9345238095238095,
+      "auc": 0.8713293650793651,
+      "support": 30
     },
     "2": {
       "name": "Moderate",
-      "sensitivity": 0.7976190476190477,
-      "specificity": 0.88,
-      "auc": 0.928982683982684,
-      "support": 84
+      "sensitivity": 0.6206896551724138,
+      "specificity": 0.9283154121863799,
+      "auc": 0.9194784328265975,
+      "support": 87
     },
     "3": {
       "name": "Severe",
-      "sensitivity": 0.4117647058823529,
-      "specificity": 0.9649122807017544,
-      "auc": 0.9158066735466117,
+      "sensitivity": 0.6470588235294118,
+      "specificity": 0.9340974212034384,
+      "auc": 0.9053598516770606,
       "support": 17
     },
     "4": {
       "name": "Proliferative",
-      "sensitivity": 0.42424242424242425,
-      "specificity": 0.9877300613496932,
-      "auc": 0.9265662762595278,
+      "sensitivity": 0.45454545454545453,
+      "specificity": 0.9669669669669669,
+      "auc": 0.911911911911912,
       "support": 33
     }
   },
   "confusion_matrix": [
     [
-      193,
-      2,
+      191,
+      7,
       1,
       0,
       0
     ],
     [
-      6,
-      8,
-      13,
-      0,
-      2
-    ],
-    [
-      3,
-      7,
-      67,
-      6,
+      2,
+      16,
+      9,
+      2,
       1
     ],
     [
       1,
-      0,
-      8,
-      7,
-      1
+      11,
+      54,
+      13,
+      8
     ],
     [
       0,
-      2,
+      0,
+      4,
       11,
+      2
+    ],
+    [
+      0,
+      4,
       6,
-      14
+      8,
+      15
     ]
   ],
   "class_names": [
@@ -85,5 +85,5 @@
     "Severe",
     "Proliferative"
   ],
-  "num_samples": 359
+  "num_samples": 366
 }

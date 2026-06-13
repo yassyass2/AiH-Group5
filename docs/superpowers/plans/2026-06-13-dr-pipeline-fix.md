@@ -1358,7 +1358,7 @@ git commit -m "chore: allow validating alternate preprocessed data dirs"
 - Generated but ignored: `capstone-project/artifacts/*.keras`
 - Generated but ignored: `capstone-project/mlflow.db`, `capstone-project/mlartifacts`
 
-- [ ] **Step 1: Train canonical baseline**
+- [x] **Step 1: Train canonical baseline**
 
 Run from repository root:
 
@@ -1374,7 +1374,7 @@ val_qwk: ...
 Wrote test report to .../artifacts/test_report.json
 ```
 
-- [ ] **Step 2: Inspect test report**
+- [x] **Step 2: Inspect test report**
 
 Run:
 
@@ -1395,7 +1395,7 @@ confusion_matrix
 num_samples
 ```
 
-- [ ] **Step 3: Generate plots**
+- [x] **Step 3: Generate plots**
 
 Run:
 
@@ -1426,7 +1426,7 @@ git commit -m "artifacts: add canonical baseline evaluation outputs"
 - Generated: `capstone-project/artifacts/figures/gradcam_*.png`
 - Modify if needed: `capstone-project/src/gradcam.py`
 
-- [ ] **Step 1: Run Grad-CAM tests before generating artifacts**
+- [x] **Step 1: Run Grad-CAM tests before generating artifacts**
 
 Run:
 
@@ -1436,7 +1436,10 @@ uv run python -m pytest capstone-project/tests/test_gradcam_contract.py -q
 
 Expected: pass.
 
-- [ ] **Step 2: Generate Grad-CAM figures**
+Actual: passed via `uv run python -m unittest capstone-project.tests.test_gradcam_contract`
+because `pytest` is not installed in the current venv.
+
+- [x] **Step 2: Generate Grad-CAM figures**
 
 Run:
 
@@ -1455,7 +1458,7 @@ capstone-project/artifacts/figures/gradcam_grade_4.png
 capstone-project/artifacts/figures/gradcam_summary.png
 ```
 
-- [ ] **Step 3: Manually inspect Grad-CAM outputs**
+- [x] **Step 3: Manually inspect Grad-CAM outputs**
 
 Open the generated PNGs and check:
 
