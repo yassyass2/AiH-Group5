@@ -93,3 +93,48 @@ mlflow server --backend-store-uri sqlite:///capstone-project/mlflow.db --default
 ## Training runtime
 
 The training runtime is pinned to Python 3.13 with TensorFlow 2.21. TensorFlow 2.21 supports Python 3.10-3.13; Python 3.14 is not a supported TensorFlow runtime for this project.
+
+## Current baseline result
+
+The canonical EfficientNetB0 baseline uses APTOS 2019 only, one-channel
+green-channel inputs, class-weighted training, and checkpoint selection on
+validation QWK. The current held-out test result is:
+
+```text
+QWK                 0.8655
+Accuracy            0.7842
+Macro sensitivity   0.6431
+Macro specificity   0.9492
+Macro ROC-AUC       0.9204
+```
+
+The weakest recalls are grade 1 mild (`0.5333`) and grade 4 proliferative
+(`0.4545`), so SMOTE remains a separate follow-up experiment rather than part
+of the default baseline.
+
+## Evaluation and Grad-CAM artifacts
+
+After training, regenerate evaluation plots from the latest report and MLflow
+history:
+
+```bash
+uv run python capstone-project/src/plots.py \
+  --report capstone-project/artifacts/test_report.json \
+  --out-dir capstone-project/artifacts/figures \
+  --run-name efficientnet-b0-baseline
+```
+
+Generate Grad-CAM figures from the selected checkpoint:
+
+```bash
+uv run python capstone-project/src/gradcam.py \
+  --model capstone-project/artifacts/best_model.keras \
+  --data-dir capstone-project/data/preprocessed \
+  --out-dir capstone-project/artifacts/figures \
+  --samples-per-grade 6
+```
+
+Grad-CAM is qualitative in the current scope. The implementation validates that
+the Grad-CAM model predictions match the original model predictions before
+heatmaps are generated, but the current project does not claim lesion-mask
+overlap metrics.

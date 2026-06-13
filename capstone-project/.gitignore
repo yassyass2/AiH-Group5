@@ -27,6 +27,7 @@ runs/
 outputs/
 results/
 *.log
+docs/build/
 
 # Large numpy/pickle files
 *.npy 

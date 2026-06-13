@@ -1,18 +1,17 @@
 \documentclass[11pt,a4paper]{article}
 
-% --- Packages (all part of a standard TeX Live / MiKTeX install) ----------
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{amsmath}
-\usepackage{amssymb}
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{siunitx}
+\usepackage{tabularx}
 \usepackage[hidelinks]{hyperref}
 
 \sisetup{detect-weight=true, detect-family=true}
 
-\title{Preprocessing Pipeline for Diabetic Retinopathy Grading\\
+\title{Canonical Pipeline for Diabetic Retinopathy Grading\\
 on the APTOS~2019 Fundus Image Dataset}
 \author{AI for Health --- Group~5}
 \date{\today}
@@ -21,244 +20,164 @@ on the APTOS~2019 Fundus Image Dataset}
 \maketitle
 
 \begin{abstract}
-We describe the preprocessing pipeline applied to the APTOS~2019 Blindness
-Detection dataset prior to training a convolutional neural network for the
-five-class grading of diabetic retinopathy (DR), reproducing the procedure of
-the reference study. The pipeline addresses three characteristic challenges of
-colour fundus photography: low and locally varying lesion contrast, sensor
-noise, and pronounced class imbalance. It comprises (i)~resizing to the input
-resolution of the target network, (ii)~Contrast Limited Adaptive Histogram
-Equalisation (CLAHE) for contrast enhancement, (iii)~median filtering for noise
-reduction, (iv)~normalisation of pixel intensities to the unit interval, and
-(v)~synthetic minority over-sampling (SMOTE) applied exclusively to the
-training partition. The resulting tensors are stored in a model-ready format
-for an EfficientNet-B0 classifier. We report the exact parameters so that the
-procedure is fully reproducible.
+This document describes the current reproducible pipeline for five-class
+diabetic retinopathy grading on the APTOS~2019 fundus image dataset. The
+pipeline intentionally uses a narrow baseline scope: APTOS~2019 only,
+green-channel preprocessing, an ImageNet-pretrained EfficientNetB0 classifier,
+class-weighted baseline training, a separate optional SMOTE experiment, and
+Grad-CAM visualisation. The purpose of this version is to stabilise the data,
+model, metric, and explainability contracts before extending the project with
+additional datasets or explanation methods.
 \end{abstract}
 
-%==========================================================================
 \section{Dataset}
 \label{sec:dataset}
 
-We use the APTOS~2019 Blindness Detection dataset, which contains colour
-fundus photographs labelled by clinicians on the five-point International
-Clinical Diabetic Retinopathy severity scale: \emph{0~--~no DR},
-\emph{1~--~mild}, \emph{2~--~moderate}, \emph{3~--~severe}, and
-\emph{4~--~proliferative DR}. The data are provided already partitioned into
-training, validation, and test splits, each accompanied by a comma-separated
-file mapping an image identifier (\texttt{id\_code}) to its grade
-(\texttt{diagnosis}).
+The project uses the APTOS~2019 Blindness Detection dataset. Each image is
+labelled on the five-point diabetic retinopathy (DR) severity scale:
+\emph{0~--~no DR}, \emph{1~--~mild}, \emph{2~--~moderate},
+\emph{3~--~severe}, and \emph{4~--~proliferative DR}. The current run uses
+\num{2930} training images, \num{366} validation images, and \num{366} held-out
+test images.
 
-The images are acquired with a variety of fundus cameras under differing
-conditions; consequently they are highly heterogeneous in resolution
-(ranging from $480\times640$ to $2588\times3388$~pixels), aspect ratio, and
-illumination. Many images are framed in landscape orientation, in which the
-circular retinal field of view fills the full sensor height and is therefore
-clipped at the top and bottom while the left and right margins remain black;
-this is normal framing rather than image truncation. After verifying that the
-local and remotely hosted copies of the dataset were byte-identical, the
-complete dataset (\num{2930} training, \num{366} validation, and \num{366} test
-images) was used as the source, with no images discarded.
+The input photographs vary in resolution, aspect ratio, illumination, and
+camera framing. The preprocessing pipeline therefore standardises each image
+before training while preserving the natural validation and test distributions.
 
-%==========================================================================
 \section{Preprocessing Pipeline}
 \label{sec:pipeline}
 
-The pipeline is designed for an EfficientNet-B0 backbone, whose native input
-is a $224\times224\times3$ tensor. The ordering of operations follows the
-reference study: images are standardised in size, their contrast is enhanced,
-sensor noise is suppressed, and pixel intensities are normalised; class
-balancing is performed last, after the train/validation/test split, so that
-synthetic samples can never leak into the evaluation partitions. The per-image
-operations are summarised in Algorithm-style form below, followed by a detailed
-description of each stage.
+Images are converted to RGB, black borders are cropped using a threshold of 10,
+the fundus is resized to \(224 \times 224\) with aspect-ratio-preserving zero
+padding, the green channel is extracted, CLAHE is applied with clipLimit 2.0
+and an \(8 \times 8\) tile grid, median filtering is applied with a \(3 \times 3\)
+kernel, and pixel values are normalized to \texttt{float32} \([0,1]\).
 
-\begin{enumerate}
-  \item \textbf{Resizing.} Resample to $224\times224$~pixels
-        (Section~\ref{sec:resize}).
-  \item \textbf{Contrast enhancement.} Apply CLAHE to improve local lesion and
-        vessel contrast (Section~\ref{sec:clahe}).
-  \item \textbf{Noise reduction.} Median filtering to suppress sensor noise
-        (Section~\ref{sec:denoise}).
-  \item \textbf{Normalisation.} Scale pixel intensities to the unit interval
-        $[0,1]$ (Section~\ref{sec:normalise}).
-  \item \textbf{Class balancing.} Apply SMOTE to the training partition only
-        (Section~\ref{sec:smote}).
-\end{enumerate}
+The resulting saved array contract is:
 
-%--------------------------------------------------------------------------
-\subsection{Resizing}
-\label{sec:resize}
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Split & Image tensor & Label tensor \\
+\midrule
+Train & \((2930, 224, 224, 1)\), \texttt{float32}, \([0,1]\) & \((2930,)\) \\
+Validation & \((366, 224, 224, 1)\), \texttt{float32}, \([0,1]\) & \((366,)\) \\
+Test & \((366, 224, 224, 1)\), \texttt{float32}, \([0,1]\) & \((366,)\) \\
+\bottomrule
+\end{tabular}
+\end{center}
 
-Each image is resampled to a fixed $224\times224$ resolution to match the input
-dimensions of EfficientNet-B0. Resizing uses area interpolation (OpenCV's
-\texttt{INTER\_AREA}), which is well suited to the downscaling that dominates
-this heterogeneous-resolution dataset.
+\subsection{Green Channel and CLAHE}
+\label{sec:green-clahe}
 
-%--------------------------------------------------------------------------
-\subsection{Contrast Enhancement with CLAHE}
-\label{sec:clahe}
+The green channel is used because retinal vessels, haemorrhages, and several
+small lesion patterns generally have stronger contrast there than in the red
+or blue channels. CLAHE is then applied directly to the green channel to
+enhance local contrast without applying a global histogram transform to the
+full image.
 
-Because illumination varies markedly across a single retina, we enhance local
-contrast with Contrast Limited Adaptive Histogram Equalisation (CLAHE). CLAHE
-equalises the histogram within local tiles rather than globally, and clips the
-contribution of each histogram bin to limit noise amplification in homogeneous
-regions, which improves the clarity of microaneurysms, haemorrhages, exudates,
-and the retinal vasculature.
+\subsection{Class Imbalance Handling}
+\label{sec:imbalance}
 
-CLAHE operates on a single channel. To enhance a colour image without
-distorting its hues, we convert it from RGB to the CIELAB colour space, apply
-CLAHE to the lightness ($L$) channel, and convert back to RGB. We use a clip
-limit of \num{2.0} and a tile grid of $8\times8$. This preserves the
-three-channel shape that EfficientNet-B0 expects.
+The canonical baseline does not alter the validation or test distribution.
+During baseline training, class imbalance is handled with class weights derived
+from the training labels. SMOTE is treated as a separate experiment rather than
+as part of the default baseline. In the SMOTE experiment, only the training
+split is oversampled; validation and test arrays remain unchanged.
 
-%--------------------------------------------------------------------------
-\subsection{Noise Reduction}
-\label{sec:denoise}
+\section{Model Contract}
+\label{sec:model}
 
-Colour fundus photographs carry sensor and compression noise. Following the
-reference study, we apply a median blur with a $3\times3$ kernel after contrast
-enhancement. Median filtering removes isolated speckle noise while, unlike a
-Gaussian blur, preserving the edges of vessels and lesions, which are the
-diagnostically relevant structures; the small kernel keeps fine detail intact.
-The filter operates on the 8-bit image, before the normalisation of
-Section~\ref{sec:normalise}.
+The model accepts one-channel preprocessed green images in \([0,1]\). Inside
+the model, the channel is scaled to the EfficientNetB0 input range and repeated
+to three channels for compatibility with ImageNet-pretrained EfficientNetB0.
+This keeps the external data contract simple while allowing the backbone to use
+pretrained weights.
 
-%--------------------------------------------------------------------------
-\subsection{Intensity Normalisation}
-\label{sec:normalise}
+The baseline model is selected using validation quadratic weighted kappa (QWK),
+with early stopping and learning-rate reduction also monitored through the
+validation run.
 
-Finally, the pixel intensities are normalised from the $[0,255]$ integer range
-to the $[0,1]$ unit interval by dividing by~\num{255},
-\begin{equation}
-  p_{\text{norm}} = \frac{p}{255},
-\end{equation}
-where $p$ is the original pixel value and $p_{\text{norm}}$ its normalised
-counterpart. Normalising the dynamic range across images acquired under
-different illumination standardises the input statistics and stabilises and
-accelerates the optimisation of the downstream network. The arrays are
-consequently stored in single-precision floating point
-(Section~\ref{sec:output}).
+\section{Evaluation}
+\label{sec:evaluation}
 
-A practical caveat for deployment: the Keras \texttt{EfficientNetB0} model
-provides its own rescaling layer through
-\texttt{efficientnet.preprocess\_input}. Because the data produced here is
-already scaled to $[0,1]$, it must be fed to the network \emph{without} a
-second application of \texttt{preprocess\_input}, otherwise the scaling would
-be applied twice.
-
-%--------------------------------------------------------------------------
-\subsection{Class Balancing with SMOTE}
-\label{sec:smote}
-
-The training partition is strongly imbalanced, with the \emph{no~DR} grade
-accounting for roughly half of all samples and the \emph{severe} grade for
-only about \SI{5}{\percent} (Table~\ref{tab:counts}). To prevent the
-classifier from being biased towards the majority grade we balance the
-training set with the Synthetic Minority Over-sampling Technique (SMOTE).
-Each preprocessed image is flattened into a feature vector of
-$224\times224\times3 = \num{150528}$ values, and SMOTE synthesises new
-minority-class samples by interpolating between a sample and its
-$k$~nearest neighbours of the same class ($k=5$). After resampling, the
-vectors are reshaped back to image tensors.
-
-Two points are essential for correctness. First, SMOTE is fitted on the
-\emph{training partition only}; the validation and test partitions retain
-their natural class distribution so that performance is estimated on a
-realistic prior. Second, SMOTE operates on the already-normalised floating
-point images of Section~\ref{sec:normalise}, which sidesteps a subtle failure
-mode: performed directly on unsigned 8-bit pixels, the interpolation
-$\mathbf{x}_{\text{new}} = \mathbf{x}_i + \lambda\,(\mathbf{x}_j - \mathbf{x}_i)$,
-$\lambda \in [0,1]$, would wrap around modulo~256 wherever the difference
-$\mathbf{x}_j - \mathbf{x}_i$ is negative and yield corrupted synthetic images.
-Because both operands already lie in $[0,1]$, every interpolated sample also
-lies in $[0,1]$, so no rounding or clipping is required. The feature matrix is
-kept in single-precision floating point, which halves the peak memory footprint
-relative to the double precision SMOTE would otherwise use.
-
-Balancing raises every training grade to the majority count, yielding a fully
-balanced training set (Table~\ref{tab:counts}).
+Classification performance is evaluated with QWK as the primary metric,
+supplemented by accuracy, macro sensitivity, macro specificity, macro ROC-AUC,
+per-class sensitivity, per-class specificity, and a confusion matrix.
 
 \begin{table}[t]
   \centering
-  \caption{Per-class image counts at each stage of the pipeline. Grades follow
-  the five-point clinical DR scale (0--4). \textbf{These counts are stale:}
-  they were produced by an earlier version of the pipeline that applied quality
-  filtering, and are retained only for reference. They must be regenerated from
-  a run of the current procedure, which discards no images (so the ``raw'' row
-  is the input to SMOTE) and balances every training grade to the majority
-  count of \num{1434}, giving \num{7170} training images in total.}
-  \label{tab:counts}
-  \begin{tabular}{lrrrrrr}
+  \caption{Evaluation dimensions used by the current pipeline.}
+  \label{tab:evaluation}
+  \begin{tabularx}{\textwidth}{p{1.1cm}p{3.0cm}X}
     \toprule
-    & \multicolumn{5}{c}{DR grade} & \\
-    \cmidrule(lr){2-6}
-    Stage & 0 & 1 & 2 & 3 & 4 & Total \\
+    RQ & Dimension & Primary instruments \\
     \midrule
-    Train (raw)            & 1434 & 300 & 808 & 154 & 234 & 2930 \\
-    Train (after filter)   & 1411 & 294 & 770 & 145 & 229 & 2849 \\
-    Train (after SMOTE)    & 1411 & 1411 & 1411 & 1411 & 1411 & 7055 \\
+    RQ1 & Classification performance & Quadratic Weighted Kappa, per-class sensitivity and specificity, macro AUC, and accuracy. \\
+    RQ2 & Explainability quality & Grad-CAM visual inspection against expected retinal regions and failure-mode review. \\
+    RQ3 & Imbalance sensitivity & Difference in QWK and per-class sensitivity between baseline and SMOTE experiment. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\section{Baseline Results}
+\label{sec:results}
+
+The canonical EfficientNetB0 baseline reached a validation QWK of \(0.8648\) at
+epoch 17. Early stopping stopped training at epoch 25 and restored the epoch 17
+weights. On the held-out test split, the model achieved the results shown in
+Table~\ref{tab:test-results}.
+
+\begin{table}[t]
+  \centering
+  \caption{Held-out test performance of the canonical EfficientNetB0 baseline.}
+  \label{tab:test-results}
+  \begin{tabular}{lr}
+    \toprule
+    Metric & Value \\
     \midrule
-    Validation (after filter) & 169 & 40 & 98 & 21 & 28 & 356 \\
-    Test (after filter)       & 196 & 29 & 84 & 17 & 33 & 359 \\
+    Quadratic weighted kappa & 0.8655 \\
+    Accuracy & 0.7842 \\
+    Macro sensitivity & 0.6431 \\
+    Macro specificity & 0.9492 \\
+    Macro ROC-AUC & 0.9204 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-%==========================================================================
-\section{Output Format}
-\label{sec:output}
+The main weakness is minority-grade recall. Sensitivity is strongest for grade
+0 (\(0.9598\)) and lower for grade 1 (\(0.5333\)) and grade 4 (\(0.4545\)).
+This is why the SMOTE experiment remains useful as a controlled follow-up.
 
-Each partition is stored as a pair of arrays: an image tensor of shape
-$(N, 224, 224, 3)$ in single-precision floating point with values in $[0,1]$
-and a corresponding integer label vector of length $N$. As noted in
-Section~\ref{sec:normalise}, because the data is already normalised it should
-be passed to the Keras EfficientNet-B0 model \emph{without} a further call to
-its \texttt{preprocess\_input} rescaling layer, which would otherwise apply the
-scaling twice. The synthetic samples produced by SMOTE have no natural file
-identifier, so the partitions are stored as serialised arrays rather than as
-individual image files.
+\section{Explainability}
+\label{sec:explainability}
 
-%==========================================================================
+Grad-CAM is generated from the trained EfficientNetB0 model by exposing the
+final convolutional activation and replaying the exact classifier head. The
+implementation is validated by checking that Grad-CAM model predictions match
+the original model predictions before heatmaps are generated.
+
+The current explainability output should be interpreted as qualitative visual
+evidence only. Several heatmaps highlight retinal structures plausibly related
+to disease severity, but some also focus on the optic disc or image borders.
+Those cases are treated as failure-mode evidence and should not be presented as
+quantitative lesion-level validation.
+
 \section{Reproducibility}
-\label{sec:repro}
+\label{sec:reproducibility}
 
-Table~\ref{tab:params} lists every parameter required to reproduce the
-pipeline. All randomised operations (SMOTE) use a fixed seed of \num{42}.
+All generated artifacts for the current baseline are stored under the project
+\texttt{artifacts/} directory. The main files are:
 
-\begin{table}[t]
-  \centering
-  \caption{Pipeline parameters.}
-  \label{tab:params}
-  \begin{tabular}{lll}
-    \toprule
-    Stage & Parameter & Value \\
-    \midrule
-    Resize             & Target resolution          & $224\times224$ \\
-                       & Interpolation              & area (\texttt{INTER\_AREA}) \\
-    \midrule
-    Contrast           & Method                     & CLAHE \\
-                       & Applied to                 & LAB lightness channel \\
-                       & CLAHE clip limit           & 2.0 \\
-                       & CLAHE tile grid            & $8\times8$ \\
-    \midrule
-    Noise reduction    & Filter                     & median blur \\
-                       & Kernel size                & $3\times3$ \\
-    \midrule
-    Normalisation      & Scaling                    & divide by 255 \\
-                       & Output range               & $[0,1]$ \\
-                       & Output dtype               & float32 \\
-    \midrule
-    Balancing          & Method                     & SMOTE \\
-                       & Neighbours $k$             & 5 \\
-                       & Working precision          & float32 \\
-                       & Random seed                & 42 \\
-                       & Applied to                 & training set only \\
-    \bottomrule
-  \end{tabular}
-\end{table}
+\begin{itemize}
+  \item \texttt{test\_report.json}: held-out test metrics and confusion matrix.
+  \item \texttt{figures/confusion\_matrix.png}: count and row-normalised confusion matrices.
+  \item \texttt{figures/per\_class\_metrics.png}: sensitivity, specificity, and AUC per grade.
+  \item \texttt{figures/training\_curves.png}: loss, accuracy, and validation QWK curves.
+  \item \texttt{figures/gradcam\_summary.png}: one Grad-CAM example per grade.
+  \item \texttt{figures/gradcam\_grade\_0.png} through \texttt{gradcam\_grade\_4.png}: per-grade Grad-CAM grids.
+\end{itemize}
 
-%==========================================================================
 \begin{thebibliography}{9}
 
 \bibitem{aptos2019}
@@ -278,10 +197,15 @@ S.~M.~Pizer \emph{et al.},
 pp.~355--368, 1987.
 
 \bibitem{smote}
-N.~V.~Chawla, K.~W.~Bowyer, L.~O.~Hall, and W.~P.~Kegelmeyer,
+N.~V.~Chawla, K.~W.~Bowyer, L.~O.~Hall, and P.~Kegelmeyer,
 ``SMOTE: Synthetic Minority Over-sampling Technique,''
 \emph{Journal of Artificial Intelligence Research}, vol.~16, pp.~321--357,
 2002.
+
+\bibitem{gradcam}
+R.~R.~Selvaraju \emph{et al.},
+``Grad-CAM: Visual Explanations from Deep Networks via Gradient-Based Localization,''
+\emph{International Journal of Computer Vision}, vol.~128, pp.~336--359, 2020.
 
 \end{thebibliography}
 

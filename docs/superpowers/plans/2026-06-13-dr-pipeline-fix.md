@@ -1483,7 +1483,7 @@ git commit -m "artifacts: add verified Grad-CAM visualizations"
 - Modify: `capstone-project/docs/preprocessing_methodology.tex`
 - Modify: `capstone-project/readme.md`
 
-- [ ] **Step 1: Remove unsupported claims from paper text**
+- [x] **Step 1: Remove unsupported claims from paper text**
 
 Search current paper source for unsupported terms:
 
@@ -1493,7 +1493,7 @@ rg -n "EyePACS|Messidor|IDRiD|Grad-CAM\\+\\+|Score-CAM|pointing|Intersection-ove
 
 Any occurrence must be either removed or moved to a future-work sentence.
 
-- [ ] **Step 2: Align preprocessing section**
+- [x] **Step 2: Align preprocessing section**
 
 The paper preprocessing section must say:
 
@@ -1505,7 +1505,7 @@ the green channel is extracted, CLAHE is applied with clipLimit 2.0 and an
 values are normalized to float32 [0, 1].
 ```
 
-- [ ] **Step 3: Align model section**
+- [x] **Step 3: Align model section**
 
 The paper model section must say:
 
@@ -1515,7 +1515,7 @@ model, the channel is scaled to the EfficientNetB0 input range and repeated
 to three channels for compatibility with ImageNet-pretrained EfficientNetB0.
 ```
 
-- [ ] **Step 4: Align explainability section**
+- [x] **Step 4: Align explainability section**
 
 The paper explainability section must say:
 
@@ -1526,7 +1526,7 @@ implementation is validated by checking that Grad-CAM model predictions match
 the original model predictions before heatmaps are generated.
 ```
 
-- [ ] **Step 5: Fix malformed LaTeX table**
+- [x] **Step 5: Fix malformed LaTeX table**
 
 The broken table fragment:
 
@@ -1548,7 +1548,7 @@ RQ3 & Imbalance sensitivity & Difference in QWK and per-class sensitivity betwee
 \end{tabular}
 ```
 
-- [ ] **Step 6: Rebuild PDF and visually inspect pages**
+- [x] **Step 6: Rebuild PDF and visually inspect pages**
 
 Run the project’s LaTeX build command. If no command exists, add one to the README.
 
