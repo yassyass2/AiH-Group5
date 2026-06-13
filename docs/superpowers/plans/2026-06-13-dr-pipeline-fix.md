@@ -23,7 +23,8 @@ The canonical v1 scope is:
 - Model input contract: accepts `(224, 224, 1)` green-channel tensors in `[0, 1]`; model itself repeats/scales as needed for EfficientNetB0.
 - First training baseline: EfficientNetB0 frozen backbone, class weights, standard augmentation, validation QWK checkpointing.
 - SMOTE: separate experiment after baseline; never mixed into the baseline by default.
-- MSAG: separate optional experiment after baseline and SMOTE are stable.
+- Ordinal regression: separate EfficientNetB0 head ablation with validation-tuned QWK thresholds; not selected unless held-out test performance improves.
+- MSAG: future optional experiment after baseline, SMOTE, ordinal regression, and XAI are stable.
 - Explainability: Grad-CAM, Grad-CAM++, and limited top-k Score-CAM for qualitative comparison. No IDRiD masks, pointing-game accuracy, IoU, EyePACS, or Messidor-2 until implemented.
 - Paper alignment: paper must describe exactly this pipeline until additional experiments exist.
 

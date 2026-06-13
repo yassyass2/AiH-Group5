@@ -24,10 +24,10 @@ This document describes the current reproducible pipeline for five-class
 diabetic retinopathy grading on the APTOS~2019 fundus image dataset. The
 pipeline intentionally uses a narrow baseline scope: APTOS~2019 only,
 green-channel preprocessing, an ImageNet-pretrained EfficientNetB0 classifier,
-class-weighted baseline training, a separate optional SMOTE experiment, and
-Grad-CAM visualisation. The purpose of this version is to stabilise the data,
-model, metric, and explainability contracts before extending the project with
-additional datasets or explanation methods.
+class-weighted baseline training, separate optional SMOTE and ordinal-regression
+experiments, and Grad-CAM visualisation. The purpose of this version is to
+stabilise the data, model, metric, and explainability contracts before extending
+the project with additional datasets or explanation methods.
 \end{abstract}
 
 \section{Dataset}
@@ -98,6 +98,12 @@ The baseline model is selected using validation quadratic weighted kappa (QWK),
 with early stopping and learning-rate reduction also monitored through the
 validation run.
 
+As an ablation, the classifier head can be replaced with a single linear
+severity-score output. For that ordinal-regression experiment, validation
+predictions are converted back to five grades using ordered thresholds tuned to
+maximise validation QWK. This ablation is kept separate from the selected
+softmax baseline unless it improves held-out test performance.
+
 \section{Evaluation}
 \label{sec:evaluation}
 
@@ -115,7 +121,7 @@ per-class sensitivity, per-class specificity, and a confusion matrix.
     \midrule
     RQ1 & Classification performance & Quadratic Weighted Kappa, per-class sensitivity and specificity, macro AUC, and accuracy. \\
     RQ2 & Explainability quality & Grad-CAM visual inspection against expected retinal regions and failure-mode review. \\
-    RQ3 & Imbalance sensitivity & Difference in QWK and per-class sensitivity between baseline and SMOTE experiment. \\
+    RQ3 & Imbalance sensitivity & Difference in QWK and per-class sensitivity between baseline, SMOTE, and ordinal-regression experiments. \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -149,7 +155,15 @@ The main weakness is minority-grade recall. Sensitivity is strongest for grade
 0 (\(0.9598\)) and lower for grade 1 (\(0.5333\)) and grade 4 (\(0.4545\)).
 A separate SMOTE ablation reached similar QWK (\(0.8629\)) but lower macro
 sensitivity (\(0.5997\)), mainly because grade 1 sensitivity dropped to
-\(0.2667\). The class-weighted baseline therefore remains the selected result.
+\(0.2667\).
+
+The ordinal-regression ablation reached lower held-out test performance than
+the softmax baseline. Its validation-tuned thresholds were approximately
+\([0.92, 1.84, 3.13, 4.24]\), with validation threshold QWK \(0.8359\), but the
+held-out test QWK was \(0.8037\), accuracy was \(0.6612\), and macro
+sensitivity was \(0.4520\). The most important failure was the proliferative
+DR class, whose sensitivity dropped to \(0.0909\). The class-weighted softmax
+baseline therefore remains the selected result.
 
 \section{Explainability}
 \label{sec:explainability}
@@ -172,7 +186,9 @@ quantitative lesion-level validation.
 \label{sec:reproducibility}
 
 All generated artifacts for the current baseline are stored under the project
-\texttt{artifacts/} directory. The main files are:
+\texttt{artifacts/} directory. SMOTE and ordinal-regression ablations are stored
+under \texttt{artifacts/smote/} and \texttt{artifacts/regression/},
+respectively. The main baseline files are:
 
 \begin{itemize}
   \item \texttt{test\_report.json}: held-out test metrics and confusion matrix.

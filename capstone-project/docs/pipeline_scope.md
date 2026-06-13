@@ -18,6 +18,7 @@ The current goal is to fix and stabilize the technical pipeline before final pap
 - EfficientNetB0 baseline.
 - Class-weighted baseline training.
 - Optional SMOTE experiment after baseline.
+- Optional ordinal-regression head experiment with validation-tuned QWK thresholds.
 - Qualitative XAI comparison:
   - Grad-CAM
   - Grad-CAM++
@@ -39,6 +40,8 @@ Saved preprocessed arrays use shape `(N, 224, 224, 1)`, dtype `float32`, and val
 ## Model Contract
 
 The canonical model accepts one-channel green images in `[0, 1]`. The model graph is responsible for converting those tensors to the range and channel count expected by EfficientNetB0.
+
+The selected model head remains the five-class softmax classifier unless an ablation demonstrably improves held-out test performance. The ordinal-regression head is implemented as an experiment, but its current held-out test result is lower than the class-weighted baseline.
 
 ## Paper Rule
 

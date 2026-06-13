@@ -47,6 +47,15 @@ uv run python src/train.py --config configs/efficientnet_b0_smote.json
 SMOTE training writes to `artifacts/smote/` so it does not overwrite the
 canonical baseline artifacts in `artifacts/`.
 
+Ordinal regression is also a separate ablation, not the selected default:
+
+```bash
+uv run python capstone-project/src/train.py \
+  --config capstone-project/configs/efficientnet_b0_regression.json
+```
+
+This writes to `capstone-project/artifacts/regression/`.
+
 ## Training structure
 
 Training code lives under `src`:
@@ -114,7 +123,10 @@ Macro ROC-AUC       0.9204
 The weakest recalls are grade 1 mild (`0.5333`) and grade 4 proliferative
 (`0.4545`). A separate SMOTE ablation reached similar QWK (`0.8629`) but lower
 macro sensitivity (`0.5997`) because grade 1 recall dropped to `0.2667`.
-Therefore the class-weighted baseline remains the selected result.
+An ordinal-regression ablation with validation-tuned thresholds reached lower
+test QWK (`0.8037`) and lower macro sensitivity (`0.4520`), with particularly
+weak grade 4 recall (`0.0909`). Therefore the class-weighted baseline remains
+the selected result.
 
 ## Evaluation and Grad-CAM artifacts
 
