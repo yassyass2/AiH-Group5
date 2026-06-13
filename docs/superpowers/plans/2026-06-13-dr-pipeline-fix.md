@@ -856,7 +856,7 @@ git commit -m "feat: make EfficientNetB0 accept canonical green-channel input"
 - Modify: `capstone-project/src/gradcam.py`
 - Create: `capstone-project/tests/test_gradcam_contract.py`
 
-- [ ] **Step 1: Write Grad-CAM contract tests**
+- [x] **Step 1: Write Grad-CAM contract tests**
 
 Create `capstone-project/tests/test_gradcam_contract.py`:
 
@@ -923,7 +923,7 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
-- [ ] **Step 2: Run Grad-CAM tests to verify failure**
+- [x] **Step 2: Run Grad-CAM tests to verify failure**
 
 Run:
 
@@ -933,7 +933,7 @@ uv run python -m pytest capstone-project/tests/test_gradcam_contract.py -q
 
 Expected: failure if current `build_gradcam_model` skips model layers or assumes three-channel input.
 
-- [ ] **Step 3: Replace layer replay with graph traversal**
+- [x] **Step 3: Replace layer replay with graph traversal**
 
 Modify `capstone-project/src/gradcam.py` so `build_gradcam_model` replays all layers from the input until the EfficientNet backbone, captures the backbone output, then replays every downstream layer in order.
 
@@ -991,7 +991,7 @@ elif layer.__class__.__name__.startswith("Random"):
     x = layer(x, training=False)
 ```
 
-- [ ] **Step 4: Update overlay for one-channel images**
+- [x] **Step 4: Update overlay for one-channel images**
 
 Modify `overlay_heatmap`:
 
@@ -1009,7 +1009,7 @@ def overlay_heatmap(
     return np.clip((1.0 - alpha) * image + alpha * colored, 0.0, 1.0)
 ```
 
-- [ ] **Step 5: Run Grad-CAM tests**
+- [x] **Step 5: Run Grad-CAM tests**
 
 Run:
 
@@ -1019,7 +1019,7 @@ uv run python -m pytest capstone-project/tests/test_gradcam_contract.py -q
 
 Expected: pass.
 
-- [ ] **Step 6: Run all tests**
+- [x] **Step 6: Run all tests**
 
 Run:
 
@@ -1029,7 +1029,7 @@ uv run python -m pytest capstone-project/tests -q
 
 Expected: all tests pass.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add capstone-project/src/gradcam.py capstone-project/tests/test_gradcam_contract.py

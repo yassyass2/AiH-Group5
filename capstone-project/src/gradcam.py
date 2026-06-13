@@ -54,9 +54,11 @@ DEFAULT_MODEL = PROJECT_DIR / "artifacts" / "best_model.keras"
 DEFAULT_DATA_DIR = PROJECT_DIR / "data" / "preprocessed"
 DEFAULT_OUT_DIR = PROJECT_DIR / "artifacts" / "figures"
 
-# Head layers re-applied (in order) on top of the backbone features when
-# rebuilding the model with the conv feature map exposed.
-HEAD_LAYERS = ("avg_pool", "head_bn", "head_dropout", "predictions")
+def _find_backbone(model: keras.Model) -> keras.Model:
+    for layer in model.layers:
+        if isinstance(layer, keras.Model) and "efficientnet" in layer.name.lower():
+            return layer
+    raise ValueError("Could not find EfficientNet backbone in model")
 
 
 def build_gradcam_model(model: keras.Model) -> keras.Model:
@@ -68,21 +70,33 @@ def build_gradcam_model(model: keras.Model) -> keras.Model:
     ``model``. ``conv_features`` is the backbone output (last convolutional
     activation), the standard Grad-CAM target for EfficientNet.
     """
-    # The augmentation block is a Sequential (also a Model); the backbone is
-    # the only nested *functional* model.
-    backbone = next(
-        layer
-        for layer in model.layers
-        if isinstance(layer, keras.Model) and not isinstance(layer, keras.Sequential)
-    )
+    backbone = _find_backbone(model)
+    inputs = keras.Input(shape=model.input_shape[1:], name="gradcam_input")
 
-    inputs = keras.Input(shape=model.input_shape[1:], name="image")
-    x = model.get_layer("to_efficientnet_range")(inputs)
-    conv_features = backbone(x)
+    x = inputs
+    conv_features = None
+    seen_backbone = False
 
-    x = conv_features
-    for name in HEAD_LAYERS:
-        x = model.get_layer(name)(x)
+    for layer in model.layers[1:]:
+        if layer is backbone:
+            conv_features = layer(x, training=False)
+            x = conv_features
+            seen_backbone = True
+            continue
+
+        if isinstance(layer, keras.layers.Concatenate):
+            x = layer([x, x, x])
+        elif isinstance(layer, keras.layers.Dropout):
+            x = layer(x, training=False)
+        elif isinstance(layer, keras.Sequential):
+            x = layer(x, training=False)
+        elif layer.__class__.__name__.startswith("Random"):
+            x = layer(x, training=False)
+        else:
+            x = layer(x)
+
+    if not seen_backbone or conv_features is None:
+        raise ValueError("Could not route through EfficientNet backbone")
 
     return keras.Model(inputs, [conv_features, x], name="gradcam_model")
 
@@ -170,11 +184,10 @@ def overlay_heatmap(
     heatmap: np.ndarray,
     alpha: float = 0.40,
 ) -> np.ndarray:
-    """
-    Blend a [0, 1] heatmap onto a [0, 1] RGB image with the jet colormap.
-
-    Returns a float RGB image in [0, 1].
-    """
+    """Blend a heatmap onto a one-channel or RGB image in [0, 1]."""
+    image = np.asarray(image, dtype=np.float32)
+    if image.ndim == 3 and image.shape[-1] == 1:
+        image = np.repeat(image, 3, axis=-1)
     colored = plt.get_cmap("jet")(heatmap)[..., :3]
     return np.clip((1.0 - alpha) * image + alpha * colored, 0.0, 1.0)
 
