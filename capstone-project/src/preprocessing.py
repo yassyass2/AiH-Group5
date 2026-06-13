@@ -6,6 +6,127 @@ DEFAULT_IMAGE_SIZE = 224  # EfficientNet-B0 input resolution; shared source of
 #                           truth, imported by src/pre_proc_pipeline.py.
 
 
+def crop_black_border_rgb(image: np.ndarray, threshold: int = 10) -> np.ndarray:
+    """Crop near-black camera background from an RGB image."""
+    if image.ndim != 3 or image.shape[-1] != 3:
+        raise ValueError(f"Expected RGB image with shape (H, W, 3), got {image.shape}")
+
+    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+    mask = gray > threshold
+    if not mask.any():
+        return image
+
+    rows = np.where(mask.any(axis=1))[0]
+    cols = np.where(mask.any(axis=0))[0]
+    y1, y2 = int(rows[0]), int(rows[-1])
+    x1, x2 = int(cols[0]), int(cols[-1])
+    return image[y1 : y2 + 1, x1 : x2 + 1]
+
+
+def resize_with_padding(
+    image: np.ndarray,
+    target_size: int = DEFAULT_IMAGE_SIZE,
+    pad_value: int = 0,
+) -> np.ndarray:
+    """Resize an RGB image to a square canvas without distorting aspect ratio."""
+    if image.ndim != 3 or image.shape[-1] != 3:
+        raise ValueError(f"Expected RGB image with shape (H, W, 3), got {image.shape}")
+    if target_size <= 0:
+        raise ValueError("target_size must be positive")
+
+    height, width = image.shape[:2]
+    scale = target_size / max(height, width)
+    new_width = max(1, int(round(width * scale)))
+    new_height = max(1, int(round(height * scale)))
+
+    resized = cv2.resize(
+        image,
+        (new_width, new_height),
+        interpolation=cv2.INTER_AREA,
+    )
+    canvas = np.full(
+        (target_size, target_size, 3),
+        pad_value,
+        dtype=resized.dtype,
+    )
+    y_offset = (target_size - new_height) // 2
+    x_offset = (target_size - new_width) // 2
+    canvas[y_offset : y_offset + new_height, x_offset : x_offset + new_width] = resized
+    return canvas
+
+
+def apply_green_clahe(
+    image: np.ndarray,
+    clip_limit: float = 2.0,
+    tile_grid_size: tuple[int, int] = (8, 8),
+) -> np.ndarray:
+    """Extract the green channel and apply CLAHE."""
+    if image.ndim != 3 or image.shape[-1] != 3:
+        raise ValueError(f"Expected RGB image with shape (H, W, 3), got {image.shape}")
+
+    green = image[:, :, 1]
+    clahe = cv2.createCLAHE(
+        clipLimit=clip_limit,
+        tileGridSize=tile_grid_size,
+    )
+    return clahe.apply(green)
+
+
+def preprocess_fundus_rgb(
+    image: np.ndarray,
+    image_size: int = DEFAULT_IMAGE_SIZE,
+    crop_threshold: int = 10,
+    clip_limit: float = 2.0,
+    tile_grid_size: tuple[int, int] = (8, 8),
+    median_kernel_size: int = 3,
+) -> np.ndarray:
+    """
+    Canonical per-image preprocessing.
+
+    Input: RGB uint8 image.
+    Output: float32 tensor, shape (image_size, image_size, 1), values in [0, 1].
+    """
+    if image.ndim != 3 or image.shape[-1] != 3:
+        raise ValueError(f"Expected RGB image with shape (H, W, 3), got {image.shape}")
+
+    if image.dtype != np.uint8:
+        image = np.clip(image, 0, 255).astype(np.uint8)
+
+    image = crop_black_border_rgb(image, threshold=crop_threshold)
+    image = resize_with_padding(image, target_size=image_size)
+    green = apply_green_clahe(
+        image,
+        clip_limit=clip_limit,
+        tile_grid_size=tile_grid_size,
+    )
+    denoised = cv2.medianBlur(green, median_kernel_size)
+    normalized = denoised.astype(np.float32) / 255.0
+    return normalized[..., np.newaxis]
+
+
+def preprocess_image_path(
+    image_path,
+    image_size: int = DEFAULT_IMAGE_SIZE,
+    crop_threshold: int = 10,
+    clip_limit: float = 2.0,
+    tile_grid_size: tuple[int, int] = (8, 8),
+    median_kernel_size: int = 3,
+) -> np.ndarray:
+    """Read an image from disk and apply canonical preprocessing."""
+    image_bgr = cv2.imread(str(image_path))
+    if image_bgr is None:
+        raise ValueError(f"Could not read image: {image_path}")
+    image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+    return preprocess_fundus_rgb(
+        image_rgb,
+        image_size=image_size,
+        crop_threshold=crop_threshold,
+        clip_limit=clip_limit,
+        tile_grid_size=tile_grid_size,
+        median_kernel_size=median_kernel_size,
+    )
+
+
 def crop_black_border(image: np.ndarray, threshold: int = 20) -> np.ndarray:
     """
     Crop the black background around a fundus image.
