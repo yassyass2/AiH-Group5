@@ -14,7 +14,7 @@ if str(PROJECT_DIR) not in sys.path:
     sys.path.insert(0, str(PROJECT_DIR))
 
 from src.data import DatasetSummary, load_preprocessed_data
-from src.model import balanced_class_weights
+from src.model import balanced_class_weights, resolve_artifacts_dir
 from src.tracking import configure_mlflow, load_training_config
 
 
@@ -88,6 +88,13 @@ class TrainingStructureTests(unittest.TestCase):
 
         self.assertEqual(weights[0], 4 / (2 * 3))
         self.assertEqual(weights[1], 4 / (2 * 1))
+
+    def test_smote_config_writes_to_separate_artifact_dir(self) -> None:
+        baseline = load_training_config(PROJECT_DIR / "configs" / "efficientnet_b0.json")
+        smote = load_training_config(PROJECT_DIR / "configs" / "efficientnet_b0_smote.json")
+
+        self.assertEqual(resolve_artifacts_dir(baseline), PROJECT_DIR / "artifacts")
+        self.assertEqual(resolve_artifacts_dir(smote), PROJECT_DIR / "artifacts" / "smote")
 
     def test_project_runtime_targets_tensorflow_compatible_python(self) -> None:
         with (PROJECT_DIR.parent / "pyproject.toml").open("rb") as handle:

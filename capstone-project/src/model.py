@@ -78,6 +78,15 @@ def set_seeds(seed: int) -> None:
     keras.utils.set_random_seed(int(seed))
 
 
+def resolve_artifacts_dir(config: dict[str, Any]) -> Path:
+    """Resolve where a training run writes model and report artifacts."""
+    artifacts_dir = config.get("experiment", {}).get("artifacts_dir", "artifacts")
+    path = Path(artifacts_dir)
+    if not path.is_absolute():
+        path = PROJECT_DIR / path
+    return path
+
+
 # ---------------------------------------------------------------------------
 # Model
 # ---------------------------------------------------------------------------
@@ -418,7 +427,7 @@ def run_training(config: dict[str, Any]) -> dict[str, Any]:
         f"image_shape={summary.image_shape}"
     )
 
-    artifacts_dir = PROJECT_DIR / "artifacts"
+    artifacts_dir = resolve_artifacts_dir(config)
     artifacts_dir.mkdir(parents=True, exist_ok=True)
     checkpoint_path = artifacts_dir / "best_model.keras"
     final_model_path = artifacts_dir / "final_model.keras"

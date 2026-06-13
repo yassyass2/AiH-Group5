@@ -1,7 +1,8 @@
 {
   "experiment": {
     "name": "aptos-dr-classification",
-    "run_name": "efficientnet-b0-smote-green"
+    "run_name": "efficientnet-b0-smote-green",
+    "artifacts_dir": "artifacts/smote"
   },
   "data": {
     "preprocessed_dir": "data/preprocessed_smote",
