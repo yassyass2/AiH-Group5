@@ -4,7 +4,10 @@ data/raw/**
 *.zip
 *.tar.gz
 
-# Preprocessed data kan erbij, ligt aan hoe groot het wordt
+# Generated preprocessing outputs
+data/preprocessed/*.npy
+data/preprocessed/splits/
+data/preprocessed_smote/
 
 # Model files
 *.h5
@@ -30,7 +33,7 @@ results/
 docs/build/
 
 # Large numpy/pickle files
-*.npy 
+*.npy
 *.npz
 *.pkl
 *.pickle
@@ -43,3 +46,4 @@ cache/
 # Python cache
 __pycache__/
 *.pyc
+.ipynb_checkpoints/

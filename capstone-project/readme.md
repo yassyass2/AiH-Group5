@@ -21,7 +21,7 @@ The current project is split into three clear steps:
 
 ## Preprocessing
 
-From the `capstone-project` directory:
+Run all commands in this README from the `capstone-project` directory.
 
 ```bash
 uv run python main.py --out-dir data/preprocessed
@@ -50,11 +50,10 @@ canonical baseline artifacts in `artifacts/`.
 Ordinal regression is also a separate ablation, not the selected default:
 
 ```bash
-uv run python capstone-project/src/train.py \
-  --config capstone-project/configs/efficientnet_b0_regression.json
+uv run python src/train.py --config configs/efficientnet_b0_regression.json
 ```
 
-This writes to `capstone-project/artifacts/regression/`.
+This writes to `artifacts/regression/`.
 
 ## Training structure
 
@@ -74,10 +73,10 @@ The default training config is:
 configs/efficientnet_b0.json
 ```
 
-Run training from the repository root:
+Run the default training config:
 
 ```bash
-uv run python capstone-project/src/train.py
+uv run python src/train.py
 ```
 
 This runs the full pipeline: load the preprocessed arrays, build EfficientNet
@@ -90,16 +89,16 @@ if MLflow is installed, logged to the tracking store.
 `src/train.py` and `src/model.py` are equivalent entry points; both accept
 `--config` to point at a different config file.
 
-By default MLflow uses a local SQLite tracking store at `capstone-project/mlflow.db` and stores artifacts in `capstone-project/mlartifacts`. To use a shared tracking server, set `MLFLOW_TRACKING_URI` before running training.
+By default MLflow uses a local SQLite tracking store at `mlflow.db` and stores artifacts in `mlartifacts`. To use a shared tracking server, set `MLFLOW_TRACKING_URI` before running training.
 
 ```bash
-MLFLOW_TRACKING_URI=http://localhost:5000 python capstone-project/src/train.py
+MLFLOW_TRACKING_URI=http://localhost:5000 uv run python src/train.py
 ```
 
 Start the local MLflow UI with:
 
 ```bash
-mlflow server --backend-store-uri sqlite:///capstone-project/mlflow.db --default-artifact-root capstone-project/mlartifacts --port 5000
+uv run mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root mlartifacts --port 5000
 ```
 
 ## Training runtime
@@ -140,36 +139,36 @@ After training, regenerate evaluation plots from the selected B3 report and
 MLflow history:
 
 ```bash
-uv run python capstone-project/src/plots.py \
-  --report capstone-project/artifacts/b3/test_report.json \
-  --out-dir capstone-project/artifacts/b3/figures \
+uv run python src/plots.py \
+  --report artifacts/b3/test_report.json \
+  --out-dir artifacts/b3/figures \
   --run-name efficientnet-b3-baseline
 ```
 
 Generate Grad-CAM figures from the selected checkpoint:
 
 ```bash
-uv run python capstone-project/src/gradcam.py \
-  --model capstone-project/artifacts/b3/best_model.keras \
-  --data-dir capstone-project/data/preprocessed \
-  --out-dir capstone-project/artifacts/b3/figures \
+uv run python src/gradcam.py \
+  --model artifacts/b3/best_model.keras \
+  --data-dir data/preprocessed \
+  --out-dir artifacts/b3/figures \
   --samples-per-grade 6
 ```
 
 Generate Grad-CAM++ and limited top-k Score-CAM figures:
 
 ```bash
-uv run python capstone-project/src/gradcam.py \
-  --model capstone-project/artifacts/b3/best_model.keras \
-  --data-dir capstone-project/data/preprocessed \
-  --out-dir capstone-project/artifacts/b3/figures \
+uv run python src/gradcam.py \
+  --model artifacts/b3/best_model.keras \
+  --data-dir data/preprocessed \
+  --out-dir artifacts/b3/figures \
   --method gradcampp \
   --samples-per-grade 6
 
-uv run python capstone-project/src/gradcam.py \
-  --model capstone-project/artifacts/b3/best_model.keras \
-  --data-dir capstone-project/data/preprocessed \
-  --out-dir capstone-project/artifacts/b3/figures \
+uv run python src/gradcam.py \
+  --model artifacts/b3/best_model.keras \
+  --data-dir data/preprocessed \
+  --out-dir artifacts/b3/figures \
   --method scorecam \
   --samples-per-grade 2 \
   --scorecam-max-channels 32
