@@ -29,8 +29,12 @@ arrays):
         X_train.npy, y_train.npy   (SMOTE-balanced)
         X_val.npy,   y_val.npy
         X_test.npy,  y_test.npy
+        splits/
+            train.csv, val.csv, test.csv
+            metadata.json
 """
 
+import json
 from pathlib import Path
 
 import kagglehub
@@ -38,6 +42,7 @@ import numpy as np
 import pandas as pd
 
 from src.pre_proc_pipeline import build_dataset, apply_oversampling
+from src.split_metadata import make_dataset_provided_split_metadata
 
 RAW_DIR = Path(kagglehub.dataset_download("mariaherrerot/aptos2019"))
 OUT_DIR = Path("data/preprocessed")
@@ -70,12 +75,24 @@ def load_split_df(csv_name: str, images_dir: Path) -> pd.DataFrame:
 
 def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
+    splits_dir = OUT_DIR / "splits"
+    splits_dir.mkdir(parents=True, exist_ok=True)
+
+    split_metadata = {
+        "source": "mariaherrerot/aptos2019",
+        "strategy": "dataset_provided_train_val_test",
+        "id_column": ID_COLUMN,
+        "label_column": LABEL_COLUMN,
+        "image_extension": IMAGE_EXTENSION,
+        "splits": {},
+    }
 
     for split, (csv_name, folder) in SPLITS.items():
         images_dir = RAW_DIR / folder
         print(f"\n=== {split.upper()} ===")
 
         df = load_split_df(csv_name, images_dir)
+        df.to_csv(splits_dir / f"{split}.csv", index=False)
 
         # Per-image pipeline (paper procedure): resize -> CLAHE -> median blur
         # (kernel 3) -> normalise to [0, 1]. skip_cut_off=True -> no cut-off
@@ -102,7 +119,20 @@ def main() -> None:
 
         np.save(OUT_DIR / f"X_{split}.npy", X)
         np.save(OUT_DIR / f"y_{split}.npy", y)
+        split_metadata["splits"][split] = make_dataset_provided_split_metadata(
+            split=split,
+            csv_name=csv_name,
+            image_folder=folder,
+            df=df,
+            y_saved=y,
+            id_column=ID_COLUMN,
+            label_column=LABEL_COLUMN,
+            smote_applied_to_saved_arrays=(split == "train"),
+        )
         print(f"  Saved X_{split} {X.shape} ({X.dtype}) and y_{split} {y.shape}")
+
+    with (splits_dir / "metadata.json").open("w", encoding="utf-8") as handle:
+        json.dump(split_metadata, handle, indent=2)
 
     print(f"\nDone. Preprocessed arrays written to {OUT_DIR.resolve()}")
 

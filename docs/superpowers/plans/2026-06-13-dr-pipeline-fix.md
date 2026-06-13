@@ -403,8 +403,15 @@ git commit -m "test: define canonical preprocessing contract"
 - Modify: `capstone-project/src/pre_proc_pipeline.py`
 - Modify: `capstone-project/main.py`
 - Create: `capstone-project/tests/test_split_contract.py`
+- Create: `capstone-project/src/split_metadata.py`
+- Create: `capstone-project/tests/test_split_metadata.py`
 
-- [ ] **Step 1: Write split contract tests**
+Implementation note: `main.py` currently consumes KaggleHub's existing
+train/validation/test CSVs. We therefore keep `make_stratified_splits` as the
+tested helper for one-CSV datasets, but the entrypoint records the dataset
+provider's actual split CSVs and metadata instead of re-splitting them.
+
+- [x] **Step 1: Write split contract tests**
 
 Create `capstone-project/tests/test_split_contract.py`:
 
@@ -482,7 +489,7 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
-- [ ] **Step 2: Run split tests to verify failure**
+- [x] **Step 2: Run split tests to verify failure**
 
 Run:
 
@@ -492,7 +499,7 @@ uv run python -m pytest capstone-project/tests/test_split_contract.py -q
 
 Expected: failure because `make_stratified_splits` is not implemented.
 
-- [ ] **Step 3: Implement deterministic split helper**
+- [x] **Step 3: Implement deterministic split helper**
 
 Add this to `capstone-project/src/pre_proc_pipeline.py`:
 
@@ -544,7 +551,7 @@ def make_stratified_splits(
     }
 ```
 
-- [ ] **Step 4: Update `main.py` to persist split CSVs**
+- [x] **Step 4: Update `main.py` to persist split CSVs**
 
 Modify `capstone-project/main.py` so preprocessing writes:
 
@@ -555,7 +562,7 @@ data/preprocessed/splits/test.csv
 data/preprocessed/splits/metadata.json
 ```
 
-Use the helper:
+For one-CSV datasets, use the helper:
 
 ```python
 splits = make_stratified_splits(
@@ -581,7 +588,11 @@ with (splits_dir / "metadata.json").open("w", encoding="utf-8") as handle:
     json.dump(splits["metadata"], handle, indent=2)
 ```
 
-- [ ] **Step 5: Run split tests**
+For the current KaggleHub APTOS source, `main.py` persists the source-provided
+CSV for each split and writes metadata with raw counts, saved-array counts,
+class distributions, and whether SMOTE was applied to the saved arrays.
+
+- [x] **Step 5: Run split tests**
 
 Run:
 
@@ -591,7 +602,7 @@ uv run python -m pytest capstone-project/tests/test_split_contract.py -q
 
 Expected: all split tests pass.
 
-- [ ] **Step 6: Run all tests**
+- [x] **Step 6: Run all tests**
 
 Run:
 
@@ -601,7 +612,7 @@ uv run python -m pytest capstone-project/tests -q
 
 Expected: all tests pass.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add capstone-project/src/pre_proc_pipeline.py capstone-project/main.py capstone-project/tests/test_split_contract.py

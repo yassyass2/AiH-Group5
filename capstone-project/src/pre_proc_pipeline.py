@@ -233,6 +233,55 @@ def preprocess_image_path(
 # ---------------------------------------------------------------------------
 # Dataset assembly + steps 5-6
 # ---------------------------------------------------------------------------
+def make_stratified_splits(
+    df,
+    id_column: str = "id_code",
+    label_column: str = "diagnosis",
+    random_state: int = 42,
+    val_size: float = 0.1,
+    test_size: float = 0.1,
+) -> dict[str, object]:
+    """Create deterministic train/val/test splits from one labelled dataframe."""
+    if val_size <= 0 or test_size <= 0 or val_size + test_size >= 1:
+        raise ValueError(
+            "val_size and test_size must be positive and sum to less than 1"
+        )
+
+    from sklearn.model_selection import train_test_split
+
+    df = df.sort_values(id_column).reset_index(drop=True)
+    train_size = 1.0 - val_size - test_size
+    holdout_size = val_size + test_size
+
+    train_df, holdout_df = train_test_split(
+        df,
+        test_size=holdout_size,
+        random_state=random_state,
+        stratify=df[label_column],
+    )
+    relative_test_size = test_size / holdout_size
+    val_df, test_df = train_test_split(
+        holdout_df,
+        test_size=relative_test_size,
+        random_state=random_state,
+        stratify=holdout_df[label_column],
+    )
+
+    return {
+        "train": train_df.sort_values(id_column).reset_index(drop=True),
+        "val": val_df.sort_values(id_column).reset_index(drop=True),
+        "test": test_df.sort_values(id_column).reset_index(drop=True),
+        "metadata": {
+            "random_state": random_state,
+            "train_size": train_size,
+            "val_size": val_size,
+            "test_size": test_size,
+            "id_column": id_column,
+            "label_column": label_column,
+        },
+    }
+
+
 def build_dataset(
     df,
     images_dir: str | Path,
