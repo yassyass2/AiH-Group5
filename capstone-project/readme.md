@@ -62,7 +62,7 @@ Training code lives under `src`:
 
 ```text
 src/data.py       Load and summarize preprocessed arrays.
-src/model.py      EfficientNet-B0 model + two-phase training loop (core logic).
+src/model.py      EfficientNet model + two-phase training loop (core logic).
 src/tracking.py   Configure MLflow and load training config.
 src/train.py      Training entry point (CLI wrapper around src/model.py).
 src/evaluate.py   QWK, per-class sensitivity/specificity and ROC-AUC metrics.
@@ -80,7 +80,7 @@ Run training from the repository root:
 uv run python capstone-project/src/train.py
 ```
 
-This runs the full pipeline: load the preprocessed arrays, build EfficientNet-B0
+This runs the full pipeline: load the preprocessed arrays, build EfficientNet
 (frozen ImageNet backbone + a small custom head), warm up the head, then unfreeze
 and fine-tune the backbone with QWK-monitored checkpointing, early stopping and
 LR reduction, and finally evaluate on the held-out test split. Outputs are written
@@ -106,50 +106,53 @@ mlflow server --backend-store-uri sqlite:///capstone-project/mlflow.db --default
 
 The training runtime is pinned to Python 3.13 with TensorFlow 2.21. TensorFlow 2.21 supports Python 3.10-3.13; Python 3.14 is not a supported TensorFlow runtime for this project.
 
-## Current baseline result
+## Current selected result
 
-The canonical EfficientNetB0 baseline uses APTOS 2019 only, one-channel
+The current selected run uses EfficientNetB3 with APTOS 2019 only, one-channel
 green-channel inputs, class-weighted training, and checkpoint selection on
 validation QWK. The current held-out test result is:
 
 ```text
-QWK                 0.8655
-Accuracy            0.7842
-Macro sensitivity   0.6431
-Macro specificity   0.9492
-Macro ROC-AUC       0.9204
+QWK                 0.8908
+Accuracy            0.8005
+Macro sensitivity   0.6402
+Macro specificity   0.9530
+Macro ROC-AUC       0.9320
 ```
 
-The weakest recalls are grade 1 mild (`0.5333`) and grade 4 proliferative
-(`0.4545`). A separate SMOTE ablation reached similar QWK (`0.8629`) but lower
+The strongest previous baseline was EfficientNetB0 with QWK `0.8655`, accuracy
+`0.7842`, and macro sensitivity `0.6431`. EfficientNetB3 improves QWK,
+accuracy, macro specificity, macro ROC-AUC, grade 1 recall, and grade 4 recall.
+The main trade-off is grade 3 severe recall, which drops from `0.6471` on B0 to
+`0.3529` on B3 and must be discussed as a failure mode.
+
+A separate SMOTE ablation reached similar QWK (`0.8629`) but lower
 macro sensitivity (`0.5997`) because grade 1 recall dropped to `0.2667`.
 An ordinal-regression ablation with validation-tuned thresholds reached lower
 test QWK (`0.8037`) and lower macro sensitivity (`0.4520`), with particularly
 weak grade 4 recall (`0.0909`). An EfficientNetB1 backbone ablation reached
 test QWK `0.8595`, macro sensitivity `0.6154`, and macro ROC-AUC `0.9265`;
-it improves grade 4 recall slightly but does not beat the B0 test QWK.
-Therefore the class-weighted EfficientNetB0 baseline remains the selected
-result.
+it improves grade 4 recall slightly but does not beat the B0 or B3 test QWK.
 
 ## Evaluation and Grad-CAM artifacts
 
-After training, regenerate evaluation plots from the latest report and MLflow
-history:
+After training, regenerate evaluation plots from the selected B3 report and
+MLflow history:
 
 ```bash
 uv run python capstone-project/src/plots.py \
-  --report capstone-project/artifacts/test_report.json \
-  --out-dir capstone-project/artifacts/figures \
-  --run-name efficientnet-b0-baseline
+  --report capstone-project/artifacts/b3/test_report.json \
+  --out-dir capstone-project/artifacts/b3/figures \
+  --run-name efficientnet-b3-baseline
 ```
 
 Generate Grad-CAM figures from the selected checkpoint:
 
 ```bash
 uv run python capstone-project/src/gradcam.py \
-  --model capstone-project/artifacts/best_model.keras \
+  --model capstone-project/artifacts/b3/best_model.keras \
   --data-dir capstone-project/data/preprocessed \
-  --out-dir capstone-project/artifacts/figures \
+  --out-dir capstone-project/artifacts/b3/figures \
   --samples-per-grade 6
 ```
 
@@ -157,16 +160,16 @@ Generate Grad-CAM++ and limited top-k Score-CAM figures:
 
 ```bash
 uv run python capstone-project/src/gradcam.py \
-  --model capstone-project/artifacts/best_model.keras \
+  --model capstone-project/artifacts/b3/best_model.keras \
   --data-dir capstone-project/data/preprocessed \
-  --out-dir capstone-project/artifacts/figures \
+  --out-dir capstone-project/artifacts/b3/figures \
   --method gradcampp \
   --samples-per-grade 6
 
 uv run python capstone-project/src/gradcam.py \
-  --model capstone-project/artifacts/best_model.keras \
+  --model capstone-project/artifacts/b3/best_model.keras \
   --data-dir capstone-project/data/preprocessed \
-  --out-dir capstone-project/artifacts/figures \
+  --out-dir capstone-project/artifacts/b3/figures \
   --method scorecam \
   --samples-per-grade 2 \
   --scorecam-max-channels 32

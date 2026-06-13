@@ -24,7 +24,7 @@ The canonical v1 scope is:
 - First training baseline: EfficientNetB0 frozen backbone, class weights, standard augmentation, validation QWK checkpointing.
 - SMOTE: separate experiment after baseline; never mixed into the baseline by default.
 - Ordinal regression: separate EfficientNetB0 head ablation with validation-tuned QWK thresholds; not selected unless held-out test performance improves.
-- Backbone comparison: EfficientNetB1/B3 configs are separate ablations; EfficientNetB1 is implemented and trained but not selected because held-out test QWK is lower than B0.
+- Backbone comparison: EfficientNetB1/B3 configs are separate ablations. EfficientNetB1 is implemented and trained but not selected because held-out test QWK is lower than B0. EfficientNetB3 is implemented and trained and is currently selected on primary held-out test QWK, with lower severe-grade sensitivity documented as a failure mode.
 - MSAG: future optional experiment after baseline, SMOTE, ordinal regression, backbone comparison, and XAI are stable.
 - Explainability: Grad-CAM, Grad-CAM++, and limited top-k Score-CAM for qualitative comparison. No IDRiD masks, pointing-game accuracy, IoU, EyePACS, or Messidor-2 until implemented.
 - Paper alignment: paper must describe exactly this pipeline until additional experiments exist.

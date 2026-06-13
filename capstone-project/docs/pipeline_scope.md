@@ -44,7 +44,7 @@ The canonical model accepts one-channel green images in `[0, 1]`. The model grap
 
 The selected model head remains the five-class softmax classifier unless an ablation demonstrably improves held-out test performance. The ordinal-regression head is implemented as an experiment, but its current held-out test result is lower than the class-weighted baseline.
 
-The selected backbone remains EfficientNetB0 unless a larger-backbone ablation improves held-out test performance. EfficientNetB1 is implemented and trained as an ablation, but its current held-out test QWK is slightly lower than the B0 baseline.
+The selected backbone is currently EfficientNetB3 because it improves held-out test QWK over B0 and B1. This selection has an explicit caveat: severe-grade sensitivity is lower than the B0 baseline and must be discussed as a failure mode.
 
 ## Paper Rule
 

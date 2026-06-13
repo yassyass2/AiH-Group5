@@ -22,12 +22,13 @@ on the APTOS~2019 Fundus Image Dataset}
 \begin{abstract}
 This document describes the current reproducible pipeline for five-class
 diabetic retinopathy grading on the APTOS~2019 fundus image dataset. The
-pipeline intentionally uses a narrow baseline scope: APTOS~2019 only,
-green-channel preprocessing, an ImageNet-pretrained EfficientNetB0 classifier,
-class-weighted baseline training, separate optional SMOTE and ordinal-regression
-experiments, and Grad-CAM visualisation. The purpose of this version is to
-stabilise the data, model, metric, and explainability contracts before extending
-the project with additional datasets or explanation methods.
+pipeline intentionally uses a narrow reproducible scope: APTOS~2019 only,
+green-channel preprocessing, ImageNet-pretrained EfficientNet classifiers,
+class-weighted training, separate optional SMOTE and ordinal-regression
+experiments, backbone ablations, and Grad-CAM visualisation. The purpose of
+this version is to stabilise the data, model, metric, and explainability
+contracts before extending the project with additional datasets or explanation
+methods.
 \end{abstract}
 
 \section{Dataset}
@@ -89,14 +90,13 @@ split is oversampled; validation and test arrays remain unchanged.
 \label{sec:model}
 
 The model accepts one-channel preprocessed green images in \([0,1]\). Inside
-the model, the channel is scaled to the EfficientNetB0 input range and repeated
-to three channels for compatibility with ImageNet-pretrained EfficientNetB0.
+the model, the channel is scaled to the EfficientNet input range and repeated
+to three channels for compatibility with ImageNet-pretrained EfficientNet.
 This keeps the external data contract simple while allowing the backbone to use
 pretrained weights.
 
-The baseline model is selected using validation quadratic weighted kappa (QWK),
-with early stopping and learning-rate reduction also monitored through the
-validation run.
+Models are selected using validation quadratic weighted kappa (QWK), with early
+stopping and learning-rate reduction also monitored through the validation run.
 
 As an ablation, the classifier head can be replaced with a single linear
 severity-score output. For that ordinal-regression experiment, validation
@@ -126,7 +126,7 @@ per-class sensitivity, per-class specificity, and a confusion matrix.
   \end{tabularx}
 \end{table}
 
-\section{Baseline Results}
+\section{Results}
 \label{sec:results}
 
 The canonical EfficientNetB0 baseline reached a validation QWK of \(0.8648\) at
@@ -170,14 +170,22 @@ test split, EfficientNetB1 reached QWK \(0.8595\), accuracy \(0.7678\), macro
 sensitivity \(0.6154\), macro specificity \(0.9449\), and macro ROC-AUC
 \(0.9265\). It slightly improved proliferative DR sensitivity
 (\(0.4848\) versus \(0.4545\)), but reduced grade 2 and grade 3 sensitivity.
-The class-weighted EfficientNetB0 softmax baseline therefore remains the
-selected result.
+
+The EfficientNetB3 backbone ablation produced the strongest held-out test QWK.
+It reached QWK \(0.8908\), accuracy \(0.8005\), macro sensitivity \(0.6402\),
+macro specificity \(0.9530\), and macro ROC-AUC \(0.9320\). Compared with B0,
+it improved mild sensitivity (\(0.6333\) versus \(0.5333\)) and proliferative
+DR sensitivity (\(0.6061\) versus \(0.4545\)). The main trade-off is severe DR
+sensitivity, which dropped from \(0.6471\) for B0 to \(0.3529\) for B3. Because
+QWK is the primary metric, the class-weighted EfficientNetB3 softmax model is
+the current selected result, while the severe-grade recall drop is reported as
+a failure mode.
 
 \section{Explainability}
 \label{sec:explainability}
 
 Grad-CAM, Grad-CAM++, and a limited top-k Score-CAM variant are generated from
-the trained EfficientNetB0 model. The implementation exposes the final
+the selected EfficientNetB3 model. The implementation exposes the final
 convolutional activation and replays the exact classifier head. The Grad-CAM
 model path is validated by checking that its predictions match the original
 model predictions before heatmaps are generated.
@@ -193,10 +201,11 @@ quantitative lesion-level validation.
 \section{Reproducibility}
 \label{sec:reproducibility}
 
-All generated artifacts for the current baseline are stored under the project
-\texttt{artifacts/} directory. SMOTE and ordinal-regression ablations are stored
-under \texttt{artifacts/smote/} and \texttt{artifacts/regression/},
-respectively. The main baseline files are:
+All generated artifacts for the current B0 baseline are stored under the project
+\texttt{artifacts/} directory. SMOTE, ordinal-regression, EfficientNetB1, and
+EfficientNetB3 runs are stored under \texttt{artifacts/smote/},
+\texttt{artifacts/regression/}, \texttt{artifacts/b1/}, and
+\texttt{artifacts/b3/}, respectively. The main selected-run files are:
 
 \begin{itemize}
   \item \texttt{test\_report.json}: held-out test metrics and confusion matrix.
