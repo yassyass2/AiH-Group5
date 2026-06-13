@@ -1573,7 +1573,7 @@ git commit -m "docs: align paper text with canonical pipeline"
 **Files:**
 - No new files required unless verification output is documented.
 
-- [ ] **Step 1: Check branch**
+- [x] **Step 1: Check branch**
 
 Run:
 
@@ -1587,7 +1587,7 @@ Expected:
 musab/pipeline-fix-plan
 ```
 
-- [ ] **Step 2: Check tests**
+- [x] **Step 2: Check tests**
 
 Run:
 
@@ -1597,7 +1597,7 @@ uv run python -m pytest capstone-project/tests -q
 
 Expected: all tests pass.
 
-- [ ] **Step 3: Check preprocessing validator**
+- [x] **Step 3: Check preprocessing validator**
 
 Run from `capstone-project`:
 
@@ -1607,7 +1607,7 @@ uv run python scripts/validate_preprocessed.py
 
 Expected: no failures.
 
-- [ ] **Step 4: Check artifacts**
+- [x] **Step 4: Check artifacts**
 
 Run:
 
@@ -1618,7 +1618,7 @@ ls capstone-project/artifacts/figures
 
 Expected: report is valid JSON and figures are present.
 
-- [ ] **Step 5: Check unsupported paper claims**
+- [x] **Step 5: Check unsupported paper claims**
 
 Run:
 
@@ -1628,7 +1628,7 @@ rg -n "EyePACS|Messidor|IDRiD|Grad-CAM\\+\\+|Score-CAM|pointing|Intersection-ove
 
 Expected: no unsupported completed-work claims. Future-work mentions are acceptable only if explicitly phrased as future work.
 
-- [ ] **Step 6: Check git state**
+- [x] **Step 6: Check git state**
 
 Run:
 
