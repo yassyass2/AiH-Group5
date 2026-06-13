@@ -54,6 +54,21 @@ class ModelContractTests(unittest.TestCase):
 
         self.assertEqual(predictions.shape, (2, 1))
 
+    def test_model_builder_uses_requested_efficientnet_backbone(self) -> None:
+        model, base_model = build_model(
+            num_classes=5,
+            image_size=224,
+            dropout=0.3,
+            weights=None,
+            augment=False,
+            seed=42,
+            backbone_name="efficientnet_b1",
+        )
+
+        self.assertEqual(model.name, "efficientnet_b1_dr")
+        self.assertEqual(base_model.name, "efficientnetb1")
+        self.assertEqual(model.output_shape, (None, 5))
+
 
 if __name__ == "__main__":
     unittest.main()

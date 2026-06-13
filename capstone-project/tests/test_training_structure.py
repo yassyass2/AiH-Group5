@@ -131,6 +131,15 @@ class TrainingStructureTests(unittest.TestCase):
         self.assertEqual(resolve_artifacts_dir(baseline), PROJECT_DIR / "artifacts")
         self.assertEqual(resolve_artifacts_dir(smote), PROJECT_DIR / "artifacts" / "smote")
 
+    def test_backbone_ablation_configs_use_separate_artifact_dirs(self) -> None:
+        b1 = load_training_config(PROJECT_DIR / "configs" / "efficientnet_b1.json")
+        b3 = load_training_config(PROJECT_DIR / "configs" / "efficientnet_b3.json")
+
+        self.assertEqual(b1["model"]["name"], "efficientnet_b1")
+        self.assertEqual(b3["model"]["name"], "efficientnet_b3")
+        self.assertEqual(resolve_artifacts_dir(b1), PROJECT_DIR / "artifacts" / "b1")
+        self.assertEqual(resolve_artifacts_dir(b3), PROJECT_DIR / "artifacts" / "b3")
+
     def test_project_runtime_targets_tensorflow_compatible_python(self) -> None:
         with (PROJECT_DIR.parent / "pyproject.toml").open("rb") as handle:
             project = tomllib.load(handle)["project"]

@@ -73,6 +73,12 @@ from src.tracking import (
 
 DEFAULT_CONFIG = PROJECT_DIR / "configs" / "efficientnet_b0.json"
 
+EFFICIENTNET_BACKBONES = {
+    "efficientnet_b0": keras.applications.EfficientNetB0,
+    "efficientnet_b1": keras.applications.EfficientNetB1,
+    "efficientnet_b3": keras.applications.EfficientNetB3,
+}
+
 
 # ---------------------------------------------------------------------------
 # Reproducibility
@@ -121,6 +127,7 @@ def build_model(
     augment: bool = True,
     seed: int = 42,
     head: str = "classification",
+    backbone_name: str = "efficientnet_b0",
 ) -> tuple[keras.Model, keras.Model]:
     """
     Build the EfficientNet-B0 transfer-learning model.
@@ -157,7 +164,14 @@ def build_model(
     if augment:
         x = build_augmentation(seed)(x)
 
-    base_model = keras.applications.EfficientNetB0(
+    backbone_name = backbone_name.lower()
+    if backbone_name not in EFFICIENTNET_BACKBONES:
+        supported = ", ".join(sorted(EFFICIENTNET_BACKBONES))
+        raise ValueError(
+            f"Unsupported EfficientNet backbone '{backbone_name}'. Supported: {supported}"
+        )
+
+    base_model = EFFICIENTNET_BACKBONES[backbone_name](
         include_top=False,
         weights=weights,
         input_shape=(image_size, image_size, 3),
@@ -181,7 +195,7 @@ def build_model(
     else:
         raise ValueError(f"Unsupported model head: {head}")
 
-    model = keras.Model(inputs, outputs, name="efficientnet_b0_dr")
+    model = keras.Model(inputs, outputs, name=f"{backbone_name}_dr")
     return model, base_model
 
 
@@ -526,6 +540,7 @@ def run_training(config: dict[str, Any]) -> dict[str, Any]:
             augment=bool(training_cfg.get("augment", True)),
             seed=seed,
             head=head,
+            backbone_name=model_cfg.get("name", "efficientnet_b0"),
         )
         model.summary(print_fn=lambda line: print(line))
 
