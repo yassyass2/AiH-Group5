@@ -27,6 +27,20 @@ def test_repository_root_does_not_contain_notebooks() -> None:
     assert root_notebooks == []
 
 
+def test_preprocessing_is_structured_as_a_package() -> None:
+    preprocessing_dir = SRC_DIR / "dr_grading" / "preprocessing"
+
+    assert not (SRC_DIR / "dr_grading" / "preprocessing.py").exists()
+    assert not (SRC_DIR / "dr_grading" / "pre_proc_pipeline.py").exists()
+    assert not (SRC_DIR / "preprocessing.py").exists()
+    assert not (SRC_DIR / "pre_proc_pipeline.py").exists()
+    assert (preprocessing_dir / "__init__.py").exists()
+    assert (preprocessing_dir / "transforms.py").exists()
+    assert (preprocessing_dir / "sampling.py").exists()
+    assert (preprocessing_dir / "pipeline.py").exists()
+    assert (preprocessing_dir / "runner.py").exists()
+
+
 def test_preprocess_module_does_not_download_dataset_on_import(monkeypatch) -> None:
     def fail_on_download(_: str) -> str:
         raise AssertionError("dataset_download must run only inside preprocessing")

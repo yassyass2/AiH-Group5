@@ -4,6 +4,8 @@ This repository contains the Group 5 AI for Health capstone pipeline for five-cl
 
 The model pipeline uses an EfficientNet-B0 backbone with a custom classification head. Images are resized to 224 x 224, enhanced with CLAHE on the LAB lightness channel, denoised with a 3 x 3 median filter and normalised to `[0, 1]`. The training split is balanced with SMOTE after preprocessing. Validation and test splits keep their natural class distribution.
 
+Preprocessing code is organised under `src/dr_grading/preprocessing`: image transforms, sampling, dataset assembly and the CLI runner live in separate modules. Legacy script names remain as thin compatibility wrappers only.
+
 ## Project Layout
 
 ```text
