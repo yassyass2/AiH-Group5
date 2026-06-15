@@ -75,7 +75,7 @@ def create_retina_mask(image: np.ndarray, threshold: int = 15) -> np.ndarray:
     return mask
 
 
-def _border_retina_ratios(
+def border_retina_ratios(
     mask: np.ndarray,
     border_width_ratio: float = 0.02,
 ) -> dict[str, float]:
@@ -100,7 +100,7 @@ def is_cut_off(
 ) -> bool:
     """Return whether a fundus image is over-cropped at the image borders."""
     mask = create_retina_mask(image, threshold=threshold)
-    ratios = _border_retina_ratios(mask, border_width_ratio=border_width_ratio)
+    ratios = border_retina_ratios(mask, border_width_ratio=border_width_ratio)
     n_cut_sides = sum(value > max_side_ratio for value in ratios.values())
 
     return n_cut_sides >= min_cut_sides

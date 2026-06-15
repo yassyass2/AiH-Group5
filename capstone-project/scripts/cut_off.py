@@ -3,9 +3,9 @@ QA utility: sort the APTOS-2019 training images into "cut-off" and "normal"
 folders so the cut-off filter can be eyeballed.
 
 This is a one-off diagnostic script, NOT part of the training pipeline. It
-reuses the canonical cut-off detector from ``dr_grading/pre_proc_pipeline.py`` (the
-3-of-4-border criterion that the pipeline actually applies) rather than
-re-implementing it, so what you see here matches what ``build_dataset`` drops.
+reuses the canonical cut-off detector from ``dr_grading.preprocessing`` rather
+than re-implementing it, so what you see here matches what ``build_dataset``
+drops.
 
 Run it directly from the ``capstone-project`` directory:
 
@@ -30,11 +30,9 @@ SRC_DIR = PROJECT_DIR / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-# Reuse the pipeline's cut-off logic instead of duplicating it. _border_retina_ratios
-# is imported only for the diagnostic print below.
-from dr_grading.pre_proc_pipeline import (
+from dr_grading.preprocessing.transforms import (
+    border_retina_ratios,
     create_retina_mask,
-    _border_retina_ratios,
     is_cut_off,
 )
 
@@ -64,7 +62,7 @@ def main() -> None:
         if is_cut_off(image):
             n_cut += 1
             shutil.copy2(image_path, cutoff_dir / image_path.name)
-            ratios = _border_retina_ratios(create_retina_mask(image))
+            ratios = border_retina_ratios(create_retina_mask(image))
             print(image_path.name, ratios)
         else:
             shutil.copy2(image_path, normal_dir / image_path.name)

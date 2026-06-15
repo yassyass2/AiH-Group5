@@ -9,6 +9,7 @@ _EXPORTS = {
     "DEFAULT_IMAGE_SIZE": "dr_grading.preprocessing.transforms",
     "apply_clahe": "dr_grading.preprocessing.transforms",
     "apply_oversampling": "dr_grading.preprocessing.sampling",
+    "border_retina_ratios": "dr_grading.preprocessing.transforms",
     "build_dataset": "dr_grading.preprocessing.pipeline",
     "create_retina_mask": "dr_grading.preprocessing.transforms",
     "crop_black_border": "dr_grading.preprocessing.transforms",

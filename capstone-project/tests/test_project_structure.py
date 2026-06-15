@@ -41,6 +41,10 @@ def test_preprocessing_is_structured_as_a_package() -> None:
     assert (preprocessing_dir / "runner.py").exists()
 
 
+def test_legacy_notebooks_directory_is_not_tracked() -> None:
+    assert not (PROJECT_DIR / "Notebooks" / "data_exploration.ipynb").exists()
+
+
 def test_preprocess_module_does_not_download_dataset_on_import(monkeypatch) -> None:
     def fail_on_download(_: str) -> str:
         raise AssertionError("dataset_download must run only inside preprocessing")

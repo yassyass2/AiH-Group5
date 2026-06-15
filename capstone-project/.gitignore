@@ -8,7 +8,7 @@ data/raw/**
 data/preprocessed/
 data/preprocessed_smote/
 data/**/_samples/
-Notebooks/*distribution*.ipynb
+Notebooks/
 experiments/**/.ipynb_checkpoints/
 experiments/**/outputs/
 experiments/**/artifacts/
