@@ -9,6 +9,7 @@ from pathlib import Path
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 SRC_DIR = PROJECT_DIR / "src"
+REPOSITORY_DIR = PROJECT_DIR.parent
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
@@ -18,6 +19,12 @@ def test_dr_grading_package_exposes_stable_project_paths() -> None:
 
     assert PROJECT_DIR.name == "capstone-project"
     assert DEFAULT_PREPROCESSED_DIR == PROJECT_DIR / "data" / "preprocessed"
+
+
+def test_repository_root_does_not_contain_notebooks() -> None:
+    root_notebooks = sorted(path.name for path in REPOSITORY_DIR.glob("*.ipynb"))
+
+    assert root_notebooks == []
 
 
 def test_preprocess_module_does_not_download_dataset_on_import(monkeypatch) -> None:
