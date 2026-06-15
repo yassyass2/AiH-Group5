@@ -1,0 +1,25 @@
+{
+  "experiment_name": "exp08_smote_rgb_lab_clahe",
+  "evaluation_set": "test",
+  "model_family": "EfficientNetB0",
+  "preprocessing": "RGB with LAB-CLAHE luminance enhancement",
+  "sampling": "SMOTE on training split only; minority disease classes oversampled up to the Moderate class count",
+  "accuracy": 0.8091,
+  "macro_f1": 0.6329,
+  "macro_precision": 0.6576,
+  "macro_recall": 0.6177,
+  "weighted_f1": 0.8018,
+  "quadratic_weighted_kappa": 0.8866,
+  "auc_ovr_macro": 0.9231,
+  "auc_ovr_weighted": 0.9566,
+  "auc_ovr_micro": 0.9636,
+  "auc_ovo_macro": 0.8765,
+  "auc_ovo_weighted": 0.9193,
+  "auc_per_class_ovr": {
+    "No DR": 0.9935060640928991,
+    "Mild": 0.9090876229034124,
+    "Moderate": 0.9378500000000001,
+    "Severe": 0.8547885366337945,
+    "Proliferative DR": 0.9203647143370463
+  }
+}

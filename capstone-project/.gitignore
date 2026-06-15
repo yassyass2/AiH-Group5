@@ -9,10 +9,16 @@ data/preprocessed/
 data/preprocessed_smote/
 data/**/_samples/
 Notebooks/*distribution*.ipynb
+experiments/**/.ipynb_checkpoints/
+experiments/**/outputs/
+experiments/**/artifacts/
+experiments/**/models/
+experiments/**/raw/
 
 # Model files
 *.h5
 *.hdf5
+*.keras
 *.pt
 *.pth
 *.ckpt

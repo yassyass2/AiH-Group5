@@ -1,0 +1,5 @@
+{
+  "gradcam": "Generated for selected test examples using the final EfficientNetB0 convolutional layer.",
+  "quantitative_localization": "Skipped for APTOS 2019 because the dataset has image-level severity labels but no lesion masks.",
+  "required_for_pointing_game_or_iou": "Pixel-level lesion masks, for example from an IDRiD-style lesion annotation dataset."
+}
