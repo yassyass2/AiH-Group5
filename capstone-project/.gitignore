@@ -8,6 +8,7 @@ data/raw/**
 data/preprocessed/
 data/preprocessed_smote/
 data/**/_samples/
+Notebooks/*distribution*.ipynb
 
 # Model files
 *.h5
