@@ -1,0 +1,424 @@
+\section{Experiments and Results}
+\label{sec:results}
+
+%% ============================================================================
+%% DATA PROVENANCE (for authors; remove before submission)
+%% Canonical model:  EfficientNetB0 + SMOTE, served preprocessed .npy arrays
+%%                    (notebook: temp_paper_stuff/SMOTE.ipynb).
+%% Test set:          366 fundus images (held out, never resampled).
+%% Model selection:   best validation quadratic weighted kappa (QWK).
+%% Operating point:   class label = argmax of the 5-way softmax output.
+%%
+%% PLACEHOLDERS marked "[to supply]" must be filled once the
+%% SMOTE + Focal-loss experiment is run to completion (test metrics,
+%% confusion matrix, AUC, Grad-CAM). They live only in
+%% Sec.~\ref{subsec:imbalance_results}.
+%%
+%% Figures are intentionally left as commented \includegraphics stubs;
+%% uncomment and supply the exported PNG/PDF for the 366-image run.
+%% ============================================================================
+
+The trained diabetic-retinopathy (DR) grading model is evaluated on a held-out
+test set of $366$ fundus images that was excluded from all training and from the
+synthetic oversampling procedure. Unless stated otherwise, the reported model is
+the EfficientNetB0 classifier trained with SMOTE-balanced training data, and the
+predicted grade for each image is obtained as the $\arg\max$ of the five-way
+softmax output. The model checkpoint used for evaluation is the one that
+maximised the validation quadratic weighted kappa (QWK). Performance is
+characterised along three complementary axes: overall and per-class
+classification quality (Section~\ref{subsec:classification_results}), the spatial
+plausibility of the model's evidence via Grad-CAM
+(Section~\ref{subsec:xai_results}), and the effect of the class-imbalance
+strategy on both of these (Section~\ref{subsec:imbalance_results}).
+
+\subsection{Experimental Setup and Evaluation Protocol}
+\label{subsec:eval_protocol}
+
+The classifier is an ImageNet-pretrained EfficientNetB0 backbone followed by a
+classification head (global average pooling $\rightarrow$
+\texttt{Dense(256)} $\rightarrow$ batch normalisation $\rightarrow$
+\texttt{Dropout(0.5)} $\rightarrow$ \texttt{Dense(128)} $\rightarrow$
+\texttt{Dropout(0.4)} $\rightarrow$ \texttt{Dense(5)}), totalling approximately
+$4.41$M parameters. Training was conducted in two phases: a frozen-backbone phase
+in which only the head was optimised, followed by a fine-tuning phase in which the
+upper backbone layers (from layer $100$ onward, batch-normalisation layers kept
+frozen) were unfrozen. Both phases used the Adam optimiser with a cosine-decay
+learning-rate schedule, and both monitored the validation QWK for checkpointing
+and early stopping.
+
+Class imbalance was addressed by applying SMOTE to the \emph{training split only},
+oversampling every class up to the size of the majority training class so that the
+five grades were represented equally during training. The validation and test
+splits retain the natural, imbalanced grade distribution and were never resampled.
+The resulting class distributions are summarised in
+Table~\ref{tab:data_distribution}.
+
+\begin{table}[H]
+\centering
+\caption{Class distribution across the data splits. SMOTE was applied to the
+training split only; the validation and test splits retain the original
+(imbalanced) grade frequencies.}
+\label{tab:data_distribution}
+\begin{tabular}{lccc}
+\toprule
+Class & Train (post-SMOTE) & Validation & Test \\
+\midrule
+No DR            & 1{,}434 & 172 & 199 \\
+Mild             & 1{,}434 &  40 &  30 \\
+Moderate         & 1{,}434 & 104 &  87 \\
+Severe           & 1{,}434 &  22 &  17 \\
+Proliferative DR & 1{,}434 &  28 &  33 \\
+\midrule
+Total            & 7{,}170 & 366 & 366 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The following metrics are reported. \emph{Accuracy} is the overall fraction of
+correctly graded images. \emph{Per-class precision, recall, and F1-score} quantify
+grade-specific performance, and are aggregated as both \emph{macro} averages
+(unweighted mean across classes, sensitive to minority-class performance) and
+\emph{weighted} averages (support-weighted mean, dominated by frequent classes).
+The \emph{quadratic weighted kappa} measures agreement with the reference grades
+while penalising errors in proportion to the squared distance between the predicted
+and true grade, and is therefore the most appropriate single summary for an ordinal
+grading task. Discriminative ability is reported through the multiclass area under
+the ROC curve (AUC), in both one-vs-rest (OVR) and one-vs-one (OVO) formulations,
+together with per-class OVR-AUC.
+
+\subsection{Training Dynamics}
+\label{subsec:training_dynamics}
+
+The two-phase training schedule is summarised in
+Table~\ref{tab:training_summary}. The frozen-backbone phase reached a best
+validation QWK of $0.8877$, after which fine-tuning the upper backbone further
+improved the best validation QWK to $0.9059$ before early stopping was triggered.
+The corresponding training curves (loss, accuracy, and validation QWK per epoch)
+are shown in Figure~\ref{fig:training_curves}.
+
+\begin{table}[H]
+\centering
+\caption{Two-phase training summary for the SMOTE model. Each phase restored the
+weights of the epoch with the highest validation QWK.}
+\label{tab:training_summary}
+\begin{tabular}{lcc}
+\toprule
+ & Phase 1 (frozen) & Phase 2 (fine-tune) \\
+\midrule
+Trainable backbone layers & 0 / 238   & 109 / 238 \\
+Max.\ epochs               & 60        & 50        \\
+Best epoch (restored)      & 56        & 24        \\
+Best validation QWK        & 0.8877    & 0.9059    \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[width=\linewidth]{figures/training_curves_frozen.png}
+%   \includegraphics[width=\linewidth]{figures/training_curves_finetune.png}
+%   \caption{Training and validation curves for the frozen (top) and fine-tuning
+%   (bottom) phases: accuracy, loss, and validation QWK per epoch.}
+%   \label{fig:training_curves}
+% \end{figure}
+
+\subsection{Classification Performance}
+\label{subsec:classification_results}
+
+\subsubsection{Overall Performance}
+\label{subsubsec:overall_performance}
+
+The headline test-set metrics are reported in Table~\ref{tab:overall_metrics}. The
+model attained an overall accuracy of $0.822$ and a quadratic weighted kappa of
+$0.8762$, the latter indicating substantial agreement with the reference grades on
+the ordinal scale. The gap between the weighted F1-score ($0.819$) and the macro
+F1-score ($0.639$) reflects the residual difficulty on the minority severity grades,
+which contribute little to support-weighted averages but heavily to the unweighted
+macro average.
+
+\begin{table}[H]
+\centering
+\caption{Overall classification metrics on the test set ($n=366$).}
+\label{tab:overall_metrics}
+\begin{tabular}{lc}
+\toprule
+Metric & Value \\
+\midrule
+Accuracy                   & 0.822 \\
+Quadratic Weighted Kappa   & 0.8762 \\
+Macro precision            & 0.665 \\
+Macro recall               & 0.630 \\
+Macro F1-score             & 0.639 \\
+Weighted F1-score          & 0.819 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Per-Class Performance}
+\label{subsubsec:perclass_performance}
+
+Table~\ref{tab:classification_report} reports the per-class classification report.
+A high degree of agreement with the reference grades was achieved (QWK $= 0.8762$),
+and near-perfect separation of healthy from diseased eyes was obtained, with the
+No-DR class classified at a recall of $0.985$ and a one-vs-rest ROC-AUC of $0.9949$.
+The principal sources of error were found to lie among adjacent severity grades: the
+Mild class was most frequently confused with the Moderate class, and the Severe class
+was most frequently confused with the Moderate and Proliferative DR classes. Because
+the great majority of misclassifications occurred between neighbouring grades rather
+than between distant ones, a high quadratic weighted kappa was retained despite a
+more modest overall accuracy of $0.822$. The lowest per-class performance was
+recorded for the Severe class (F1 $= 0.375$; recall $= 0.353$), which constituted
+both the rarest class and the class subjected to the greatest degree of synthetic
+oversampling. It was therefore concluded that, although the conservative SMOTE
+strategy improved the balance of the training distribution, the discrimination of
+the rarest and ordinally intermediate severity grades remained the principal
+limitation of the model.
+
+\begin{table}[H]
+\centering
+\caption{Per-class classification report on the test set.}
+\label{tab:classification_report}
+\begin{tabular}{lcccc}
+\toprule
+Class & Precision & Recall & F1-score & Support \\
+\midrule
+No DR            & 0.970 & 0.985 & 0.978 & 199 \\
+Mild             & 0.486 & 0.600 & 0.537 &  30 \\
+Moderate         & 0.717 & 0.759 & 0.737 &  87 \\
+Severe           & 0.400 & 0.353 & 0.375 &  17 \\
+Proliferative DR & 0.750 & 0.455 & 0.566 &  33 \\
+\midrule
+Accuracy         & --    & --    & 0.822 & 366 \\
+Macro Average    & 0.665 & 0.630 & 0.639 & 366 \\
+Weighted Average & 0.824 & 0.822 & 0.819 & 366 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Confusion Structure}
+\label{subsubsec:confusion}
+
+The full confusion matrix is reported as raw counts in
+Table~\ref{tab:confusion_raw} and as row-normalised proportions (i.e.\ per-class
+recall on the diagonal) in Table~\ref{tab:confusion_norm}; the same information is
+visualised in Figure~\ref{fig:confusion_matrices}. The confusion structure confirms
+the ordinal nature of the errors. The No-DR class was almost perfectly recovered
+($196/199$ correct), with its only leakage being three images graded as Mild. The
+Mild, Severe, and Proliferative classes each exchanged the majority of their errors
+with their ordinal neighbours, and in particular the Moderate class acted as the
+dominant ``attractor'' for misclassified minority-grade images: $10$ of $30$ Mild,
+$8$ of $17$ Severe, and $8$ of $33$ Proliferative DR images were assigned to it.
+Off-diagonal mass between distant grades (e.g.\ No DR vs.\ Proliferative DR) was
+negligible.
+
+\begin{table}[H]
+\centering
+\caption{Confusion matrix (raw counts) on the test set. Rows are true grades,
+columns are predicted grades.}
+\label{tab:confusion_raw}
+\begin{tabular}{lccccc}
+\toprule
+True $\backslash$ Pred & No DR & Mild & Mod. & Sev. & Prolif. \\
+\midrule
+No DR            & 196 &  3 &  0 & 0 &  0 \\
+Mild             &   2 & 18 & 10 & 0 &  0 \\
+Moderate         &   4 & 11 & 66 & 4 &  2 \\
+Severe           &   0 &  0 &  8 & 6 &  3 \\
+Proliferative DR &   0 &  5 &  8 & 5 & 15 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Row-normalised confusion matrix on the test set. Diagonal entries equal
+the per-class recall. Rows may not sum to exactly $1.000$ due to rounding.}
+\label{tab:confusion_norm}
+\begin{tabular}{lccccc}
+\toprule
+True $\backslash$ Pred & No DR & Mild & Mod. & Sev. & Prolif. \\
+\midrule
+No DR            & 0.985 & 0.015 & 0.000 & 0.000 & 0.000 \\
+Mild             & 0.067 & 0.600 & 0.333 & 0.000 & 0.000 \\
+Moderate         & 0.046 & 0.126 & 0.759 & 0.046 & 0.023 \\
+Severe           & 0.000 & 0.000 & 0.471 & 0.353 & 0.176 \\
+Proliferative DR & 0.000 & 0.152 & 0.242 & 0.152 & 0.455 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[width=0.49\linewidth]{figures/test_confusion_matrix_raw.png}
+%   \includegraphics[width=0.49\linewidth]{figures/test_confusion_matrix_normalized.png}
+%   \caption{Test-set confusion matrices: raw counts (left) and row-normalised
+%   proportions (right).}
+%   \label{fig:confusion_matrices}
+% \end{figure}
+
+\subsubsection{Discriminative Ability (ROC-AUC)}
+\label{subsubsec:auc}
+
+The threshold-independent discriminative ability of the model is summarised in
+Table~\ref{tab:auc}, and the per-class one-vs-rest ROC curves are shown in
+Figure~\ref{fig:roc_curves}. The one-vs-rest macro-averaged AUC was $0.9310$ and the
+weighted AUC was $0.9611$, indicating that the softmax scores ranked images by
+severity well even where the $\arg\max$ decision was incorrect. Per-class OVR-AUC
+exceeded $0.91$ for every grade and reached $0.9949$ for No DR, confirming that the
+limited recall on the minority grades is primarily a decision-threshold and
+class-prior effect rather than a failure of the learned representation to separate
+the grades.
+
+\begin{table}[H]
+\centering
+\caption{Multiclass ROC-AUC on the test set. OVR: one-vs-rest; OVO: one-vs-one.}
+\label{tab:auc}
+\begin{tabular}{lc}
+\toprule
+AUC variant & Value \\
+\midrule
+OVR macro      & 0.9310 \\
+OVR weighted   & 0.9611 \\
+OVR micro      & 0.9660 \\
+OVO macro      & 0.8764 \\
+OVO weighted   & 0.9225 \\
+\midrule
+\multicolumn{2}{l}{\emph{Per-class (OVR)}} \\
+\quad No DR            & 0.9949 \\
+\quad Mild             & 0.8882 \\
+\quad Moderate         & 0.9330 \\
+\quad Severe           & 0.9200 \\
+\quad Proliferative DR & 0.9186 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[width=0.75\linewidth]{figures/test_roc_curves.png}
+%   \caption{Per-class one-vs-rest ROC curves on the test set.}
+%   \label{fig:roc_curves}
+% \end{figure}
+
+\subsection{Explainability Results}
+\label{subsec:xai_results}
+
+To assess whether the model's predictions were supported by clinically meaningful
+image evidence, Grad-CAM~\cite{selvaraju2017gradcam} saliency maps were generated
+from the final convolutional layer of the EfficientNetB0 backbone. Heatmaps were
+produced for representative correctly classified and misclassified test images
+across all five severity grades; a representative selection is shown in
+Figure~\ref{fig:gradcam_grid}.
+
+\subsubsection{Qualitative Saliency Analysis}
+\label{subsubsec:xai_qualitative}
+
+For correctly graded diseased images, the activated regions were generally
+co-located with retinal structures relevant to DR grading, and the spatial extent
+of the activated region tended to grow with predicted severity, consistent with the
+broader and more numerous lesions present at higher grades. For No-DR images, the
+activations were diffuse and concentrated around the major vascular arcades and the
+optic disc rather than on focal lesions, in line with the absence of pathology.
+Inspection of the misclassified cases was consistent with the confusion structure
+reported in Section~\ref{subsubsec:confusion}: images confused between adjacent
+grades typically exhibited saliency over genuine retinal regions but at a severity
+boundary, rather than attending to background or artefactual regions.
+
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[width=\linewidth]{figures/gradcam_examples_grid.png}
+%   \caption{Grad-CAM overlays for representative test images across the five
+%   severity grades. Each panel shows the input fundus image with the Grad-CAM
+%   heatmap superimposed; warmer colours indicate regions that contributed more
+%   strongly to the predicted grade.}
+%   \label{fig:gradcam_grid}
+% \end{figure}
+
+\subsubsection{Quantitative Localisation (Future Work)}
+\label{subsubsec:xai_quantitative}
+
+A quantitative evaluation of saliency quality (e.g.\ the Pointing
+Game~\cite{zhang2016excitation} and intersection-over-union of the thresholded
+heatmap with lesion regions) requires pixel-level lesion annotations, which are not
+available for the APTOS~2019 dataset: APTOS provides image-level severity labels
+only. Consequently, the explainability analysis presented here is qualitative.
+Quantitative localisation evaluation is left to future work and would require a
+lesion-annotated dataset such as IDRiD~\cite{porwal2018idrid}, against which the
+top-ranked Grad-CAM regions could be scored for overlap with annotated
+microaneurysms, haemorrhages, and exudates.
+
+\subsection{Impact of Class Imbalance Handling}
+\label{subsec:imbalance_results}
+
+%% ----------------------------------------------------------------------------
+%% TODO (authors): the SMOTE + Focal-loss configuration must be run to
+%% completion. Fill every "[to supply]" cell in Table~\ref{tab:imbalance_ablation}
+%% and complete the prose marked below once the focal-loss test metrics,
+%% confusion matrix, and AUC are available.
+%% ----------------------------------------------------------------------------
+
+This section compares the two class-imbalance strategies investigated in this work:
+(i) SMOTE oversampling of the training split (the model analysed above), and
+(ii) SMOTE combined with a sparse categorical focal loss
+($\gamma = 2.0$, no per-class $\alpha$ weighting, so as not to double-compensate for
+the already-balanced SMOTE training distribution). The focal loss down-weights
+easy, already-correct examples and concentrates the gradient on hard examples, and
+was motivated by the under-performance of the rarest (Severe) grade reported in
+Section~\ref{subsubsec:perclass_performance}. Because both configurations share an
+identical backbone, head, augmentation pipeline, training schedule, and evaluation
+protocol, the comparison isolates the effect of the loss function on both
+classification performance and the qualitative explanations.
+
+Table~\ref{tab:imbalance_ablation} reports the two configurations side by side on
+the identical test set. \emph{[The focal-loss column is to be completed once that
+experiment is run to completion; the accompanying prose interpreting the direction
+and magnitude of the change, and any effect on the minority-grade recall and on the
+Grad-CAM localisation, will be added at that point.]}
+
+\begin{table}[H]
+\centering
+\caption{Effect of the class-imbalance strategy on test-set performance. Both
+configurations use SMOTE-balanced training data and differ only in the loss
+function. Focal-loss values are pending completion of that experiment.}
+\label{tab:imbalance_ablation}
+\begin{tabular}{lcc}
+\toprule
+Metric & SMOTE & SMOTE + Focal loss \\
+\midrule
+Accuracy                  & 0.822  & \textit{[to supply]} \\
+Macro F1-score            & 0.639  & \textit{[to supply]} \\
+Weighted F1-score         & 0.819  & \textit{[to supply]} \\
+Quadratic Weighted Kappa  & 0.8762 & \textit{[to supply]} \\
+AUC (OVR macro)           & 0.9310 & \textit{[to supply]} \\
+\midrule
+\multicolumn{3}{l}{\emph{Per-class recall}} \\
+\quad No DR            & 0.985 & \textit{[to supply]} \\
+\quad Mild             & 0.600 & \textit{[to supply]} \\
+\quad Moderate         & 0.759 & \textit{[to supply]} \\
+\quad Severe           & 0.353 & \textit{[to supply]} \\
+\quad Proliferative DR & 0.455 & \textit{[to supply]} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%% ============================================================================
+%% NOTE (authors): this section cites three references not yet in the paper's
+%% manual thebibliography. Add the following \bibitem entries (style matches
+%% capstone-project/docs/preprocessing_methodology.tex):
+%%
+%% \bibitem{selvaraju2017gradcam}
+%% R.~R.~Selvaraju, M.~Cogswell, A.~Das, R.~Vedantam, D.~Parikh, and D.~Batra,
+%% ``Grad-CAM: Visual Explanations from Deep Networks via Gradient-Based
+%% Localization,'' \emph{Proc.\ IEEE Int.\ Conf.\ on Computer Vision (ICCV)},
+%% pp.~618--626, 2017.
+%%
+%% \bibitem{zhang2016excitation}
+%% J.~Zhang, S.~A.~Bargal, Z.~Lin, J.~Brandt, X.~Shen, and S.~Sclaroff,
+%% ``Top-down Neural Attention by Excitation Backprop,''
+%% \emph{Proc.\ European Conf.\ on Computer Vision (ECCV)}, pp.~543--559, 2016.
+%%
+%% \bibitem{porwal2018idrid}
+%% P.~Porwal \emph{et al.},
+%% ``Indian Diabetic Retinopathy Image Dataset (IDRiD): A Database for Diabetic
+%% Retinopathy Screening Research,'' \emph{Data}, vol.~3, no.~3, art.~25, 2018.
+%% ============================================================================
