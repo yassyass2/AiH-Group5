@@ -1,0 +1,6 @@
+,pred_No DR,pred_Mild,pred_Moderate,pred_Severe,pred_Proliferative DR
+true_No DR,0.97048,0.02583,0.00369,0.0,0.0
+true_Mild,0.107143,0.410714,0.464286,0.0,0.017857
+true_Moderate,0.02,0.06,0.84,0.046667,0.033333
+true_Severe,0.034483,0.0,0.413793,0.344828,0.206897
+true_Proliferative DR,0.0,0.068182,0.227273,0.181818,0.522727

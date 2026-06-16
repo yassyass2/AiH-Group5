@@ -1,0 +1,16 @@
+{
+  "source_notebook": "exp08_smote_rgb_lab_clahe_xai_auc_gradcam(1).ipynb",
+  "clean_notebook": "notebooks/2026-06-15-exp08-smote-rgb-lab-clahe-xai-auc-gradcam.ipynb",
+  "report_name": "exp08_smote_rgb_lab_clahe_xai_auc_gradcam",
+  "created_on": "2026-06-15",
+  "original_notebook_size_mb": 6.67,
+  "policy": "Notebook outputs are cleared in source control. Selected figures and metric tables are stored as report files.",
+  "figures": [
+    "reports/exp08_smote_rgb_lab_clahe_xai_auc_gradcam/figures/test_confusion_matrix_raw.png",
+    "reports/exp08_smote_rgb_lab_clahe_xai_auc_gradcam/figures/test_confusion_matrix_normalized.png",
+    "reports/exp08_smote_rgb_lab_clahe_xai_auc_gradcam/figures/test_roc_curves.png",
+    "reports/exp08_smote_rgb_lab_clahe_xai_auc_gradcam/figures/training_curves_frozen.png",
+    "reports/exp08_smote_rgb_lab_clahe_xai_auc_gradcam/figures/training_curves_finetune.png",
+    "reports/exp08_smote_rgb_lab_clahe_xai_auc_gradcam/figures/gradcam_examples_grid_preview.jpg"
+  ]
+}
