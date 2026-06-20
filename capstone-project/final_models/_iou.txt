@@ -1,0 +1,105 @@
+### SMOTE_IoU.ipynb ###
+
+Saved IDRiD Grad-CAM IoU metrics: results/exp08_smote_served_npy/exp08_smote_served_npy_smote_idrid_gradcam_iou_metrics.csv
+Saved IDRiD Grad-CAM IoU summary: results/exp08_smote_served_npy/exp08_smote_served_npy_smote_idrid_gradcam_iou_summary.json
+{
+    "evaluated_model": "results/exp08_smote_served_npy/exp08_smote_served_npy_finetune_best.keras",
+    "model_variant": "smote",
+    "benchmark": "IDRiD segmentation masks",
+    "lesion_codes": [
+        "MA",
+        "HE",
+        "EX",
+        "SE"
+    ],
+    "excluded_mask_codes": [
+        "OD"
+    ],
+    "explained_class": "model predicted class",
+    "model_input_size": [
+        224,
+        224
+    ],
+    "image_preprocessing": {
+        "resize": "direct resize to model input size",
+        "clahe": "LAB L-channel CLAHE, clipLimit=2.0, tileGridSize=(8,8)",
+        "denoise": "medianBlur kernel=3",
+        "normalize_to_01": false
+    },
+    "heatmap_top_percent": 15.0,
+    "n_images_evaluated": 81,
+    "pred_class_distribution": {
+        "No DR": 12,
+        "Mild": 15,
+        "Moderate": 38,
+        "Severe": 6,
+        "Proliferative DR": 10
+    },
+    "pointing_game_accuracy": 0.024691358024691357,
+    "mean_energy_inside_mask": 0.037654325952049185,
+    "mean_iou_top_15pct": 0.024489540516265385,
+    "mean_dice_top_15pct": 0.045434988017181585,
+    "mean_precision_top_15pct": 0.038839451150687786,
+    "mean_recall_top_15pct": 0.1943817794656872,
+    "mean_iou_by_threshold": {
+        "top_5pct": 0.01808711763876295,
+        "top_10pct": 0.022177183342876352,
+        "top_15pct": 0.024489540516265385,
+        "top_20pct": 0.025455681656175566,
+        "top_25pct": 0.025992528204560297,
+        "top_30pct": 0.026770601654277755
+    }
+}
+
+### SMOTE_+_Focal_loss_IoU.ipynb ###
+
+Saved IDRiD Grad-CAM IoU metrics: results/exp08_smote_served_npy/exp08_smote_served_npy_smote_focal_idrid_gradcam_iou_metrics.csv
+Saved IDRiD Grad-CAM IoU summary: results/exp08_smote_served_npy/exp08_smote_served_npy_smote_focal_idrid_gradcam_iou_summary.json
+{
+    "evaluated_model": "results/exp08_smote_served_npy/exp08_smote_served_npy_finetune_best.keras",
+    "model_variant": "smote_focal",
+    "benchmark": "IDRiD segmentation masks",
+    "lesion_codes": [
+        "MA",
+        "HE",
+        "EX",
+        "SE"
+    ],
+    "excluded_mask_codes": [
+        "OD"
+    ],
+    "explained_class": "model predicted class",
+    "model_input_size": [
+        224,
+        224
+    ],
+    "image_preprocessing": {
+        "resize": "direct resize to model input size",
+        "clahe": "LAB L-channel CLAHE, clipLimit=2.0, tileGridSize=(8,8)",
+        "denoise": "medianBlur kernel=3",
+        "normalize_to_01": false
+    },
+    "heatmap_top_percent": 15.0,
+    "n_images_evaluated": 81,
+    "pred_class_distribution": {
+        "No DR": 12,
+        "Mild": 11,
+        "Moderate": 45,
+        "Severe": 6,
+        "Proliferative DR": 7
+    },
+    "pointing_game_accuracy": 0.024691358024691357,
+    "mean_energy_inside_mask": 0.037952826836974256,
+    "mean_iou_top_15pct": 0.023787377925039887,
+    "mean_dice_top_15pct": 0.04458931153822857,
+    "mean_precision_top_15pct": 0.03923642172661217,
+    "mean_recall_top_15pct": 0.18206005364209296,
+    "mean_iou_by_threshold": {
+        "top_5pct": 0.017271605068931613,
+        "top_10pct": 0.021415430368084975,
+        "top_15pct": 0.023787377925039887,
+        "top_20pct": 0.02586702693522031,
+        "top_25pct": 0.02734232502560416,
+        "top_30pct": 0.02801361303092225
+    }
+}
