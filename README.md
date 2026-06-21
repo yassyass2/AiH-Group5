@@ -33,7 +33,7 @@ Built for the AI in Healthcare minor — Group 5 (Hogeschool Rotterdam).
 │   ├── configs/         # Configuration files
 │   ├── docs/            # Documentation
 │   ├── experiments/     # Experiment notebooks
-│   ├── final_models/    # Final model notebooks
+│   ├── models/    # Final model notebooks
 │   ├── scripts/         # Utility scripts
 │   ├── src/             # Source code / pipeline modules
 │   ├── tests/           # Tests
