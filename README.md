@@ -50,7 +50,7 @@ uv run main.py
 
 ## Models
 
-The model notebooks are located in the `capstone-project/final_models/` directory. Experiment notebooks can be found in `capstone-project/experiments/`.
+The model notebooks are located in the `capstone-project/models/` directory. Experiment notebooks can be found in `capstone-project/experiments/`.
 
 ## Dataset
 
