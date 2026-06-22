@@ -36,9 +36,9 @@ REQUIRED_ARRAYS = (
 )
 
 
-def load_preprocessed_data(data_dir: str | Path) -> PreprocessedDataset:
-    data_dir = Path(data_dir)
-    arrays = {name: _load_array(data_dir, name) for name in REQUIRED_ARRAYS}
+def load_preprocessed_data(data_source: str | Path) -> PreprocessedDataset:
+    data_source = Path(data_source)
+    arrays = _load_arrays(data_source)
 
     _validate_alignment(arrays["X_train"], arrays["y_train"], "train")
     _validate_alignment(arrays["X_val"], arrays["y_val"], "val")
@@ -59,11 +59,33 @@ def load_preprocessed_data(data_dir: str | Path) -> PreprocessedDataset:
     return PreprocessedDataset(summary=summary, **arrays)
 
 
+def _load_arrays(data_source: Path) -> dict[str, np.ndarray]:
+    if data_source.is_file():
+        return _load_npz_archive(data_source)
+    if data_source.is_dir():
+        return {name: _load_array(data_source, name) for name in REQUIRED_ARRAYS}
+    raise FileNotFoundError(f"Preprocessed data source does not exist: {data_source}")
+
+
 def _load_array(data_dir: Path, name: str) -> np.ndarray:
     path = data_dir / f"{name}.npy"
     if not path.exists():
         raise FileNotFoundError(f"Missing preprocessed array: {path}")
     return np.load(path)
+
+
+def _load_npz_archive(archive_path: Path) -> dict[str, np.ndarray]:
+    if archive_path.suffix != ".npz":
+        raise ValueError(
+            f"Expected a directory of .npy files or a .npz archive, got: {archive_path}"
+        )
+
+    with np.load(archive_path) as data:
+        missing = [name for name in REQUIRED_ARRAYS if name not in data.files]
+        if missing:
+            missing_names = ", ".join(missing)
+            raise KeyError(f"Missing arrays in {archive_path}: {missing_names}")
+        return {name: data[name] for name in REQUIRED_ARRAYS}
 
 
 def _validate_alignment(X: np.ndarray, y: np.ndarray, split: str) -> None:

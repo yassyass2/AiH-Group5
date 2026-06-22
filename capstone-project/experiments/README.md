@@ -2,7 +2,7 @@
 
 This folder is for exploratory work that supports the capstone paper but is not part of the production training package.
 
-Use it for Colab notebooks, experiment notes, selected metrics, and figures that are useful for review. Keep raw datasets, model weights, full run folders, and generated preprocessing outputs out of Git. Those belong in local storage, Google Drive, or MLflow artifacts.
+Use it for Colab notebooks, experiment notes, selected metrics, and figures that are useful for review. Keep raw datasets, full run folders, and bulky generated preprocessing outputs out of Git. Production inference code lives under `src/dr_grading/` and standalone entry scripts live under `capstone-project/scripts/`.
 
 ## Structure
 
@@ -13,5 +13,5 @@ Use it for Colab notebooks, experiment notes, selected metrics, and figures that
 
 - Name notebooks with a date and short experiment label: `YYYY-MM-DD-exp-name.ipynb`.
 - Put reusable code in `src/dr_grading` when it becomes part of the main pipeline.
-- Do not commit Kaggle keys, Drive credentials, model checkpoints, `.npy` files, or full generated artifact directories.
+- Do not commit Kaggle keys, Drive credentials, ad hoc model checkpoints, `.npy` files, or full generated artifact directories.
 - If a notebook produces paper-relevant figures or tables, export only the selected files under `reports/`.

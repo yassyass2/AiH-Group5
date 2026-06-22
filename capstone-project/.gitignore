@@ -1,35 +1,4 @@
-# Large data files
-data/raw/
-data/raw/**
-*.zip
-*.tar.gz
 
-# Generated data and derived samples
-data/preprocessed/
-data/preprocessed_smote/
-data/**/_samples/
-Notebooks/
-experiments/**/.ipynb_checkpoints/
-experiments/**/outputs/
-experiments/**/artifacts/
-experiments/**/models/
-experiments/**/raw/
-
-# Model files
-*.h5
-*.hdf5
-*.keras
-*.pt
-*.pth
-*.ckpt
-*.pb
-models/checkpoints/
-models/saved_models/
-wandb/
-mlruns/
-mlartifacts/
-mlflow.db
-mlflow.db-*
 
 # Training outputs
 artifacts/
@@ -40,8 +9,6 @@ results/
 *.log
 
 # Large numpy/pickle files
-*.npy
-*.npz
 *.pkl
 *.pickle
 

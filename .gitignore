@@ -1,1 +1,4 @@
 .venv/
+*.npz
+*.npy
+capstone-project/models/preprocessed/

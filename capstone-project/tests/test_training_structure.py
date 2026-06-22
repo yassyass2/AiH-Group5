@@ -48,6 +48,27 @@ class TrainingStructureTests(unittest.TestCase):
         self.assertEqual(dataset.summary.train_samples, 2)
         self.assertEqual(dataset.summary.class_distribution["train"], {0: 1, 1: 1})
 
+    def test_load_preprocessed_data_reads_npz_archives(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive_path = Path(tmp) / "dr_preprocessed_data.npz"
+            arrays = {
+                "X_train": np.zeros((2, 224, 224, 3), dtype=np.float32),
+                "y_train": np.array([0, 1], dtype=np.int64),
+                "X_val": np.ones((1, 224, 224, 3), dtype=np.float32),
+                "y_val": np.array([1], dtype=np.int64),
+                "X_test": np.full((1, 224, 224, 3), 2.0, dtype=np.float32),
+                "y_test": np.array([0], dtype=np.int64),
+            }
+            np.savez(archive_path, **arrays)
+
+            dataset = load_preprocessed_data(archive_path)
+
+        self.assertEqual(dataset.X_test.shape, (1, 224, 224, 3))
+        self.assertEqual(dataset.y_train.tolist(), [0, 1])
+        self.assertIsInstance(dataset.summary, DatasetSummary)
+        self.assertEqual(dataset.summary.test_samples, 1)
+        self.assertEqual(dataset.summary.class_distribution["test"], {0: 1})
+
     def test_configure_mlflow_uses_local_default_tracking_uri(self) -> None:
         previous = os.environ.pop("MLFLOW_TRACKING_URI", None)
         try:
